@@ -12,6 +12,7 @@ import Html.Events exposing (onClick)
 import Json.Decode
 import Json.Encode
 import WebAudio
+import WebAudio.Context as Cont
 import WebAudio.Program
 import WebAudio.Property as Prop
 
@@ -27,7 +28,7 @@ port updateAudio : Json.Encode.Value -> Cmd msg
 -- MAIN -----------------------------------------------------------------------
 
 
-main : Program () Model Msg
+main : Program Cont.AudioContext Model Msg
 main =
     WebAudio.Program.element
         { init = init
@@ -57,6 +58,8 @@ type alias Note =
 
 type alias Model =
     { notes : List Note
+    , time : Float
+    , context : Cont.AudioContext
     }
 
 
@@ -64,29 +67,27 @@ type alias Model =
 --
 
 
-initialModel : Model
+initialModel : List Note
 initialModel =
-    { notes =
-        [ { key = "a", midi = 60, triggered = False }
-        , { key = "s", midi = 62, triggered = False }
-        , { key = "d", midi = 64, triggered = False }
-        , { key = "f", midi = 65, triggered = False }
-        , { key = "g", midi = 67, triggered = False }
-        , { key = "h", midi = 69, triggered = False }
-        , { key = "j", midi = 71, triggered = False }
-        , { key = "k", midi = 72, triggered = False }
-        , { key = "l", midi = 74, triggered = False }
-        ]
-    }
+    [ { key = "a", midi = 60, triggered = False }
+    , { key = "s", midi = 62, triggered = False }
+    , { key = "d", midi = 64, triggered = False }
+    , { key = "f", midi = 65, triggered = False }
+    , { key = "g", midi = 67, triggered = False }
+    , { key = "h", midi = 69, triggered = False }
+    , { key = "j", midi = 71, triggered = False }
+    , { key = "k", midi = 72, triggered = False }
+    , { key = "l", midi = 74, triggered = False }
+    ]
 
 
 
 --
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( initialModel
+init : Cont.AudioContext -> ( Model, Cmd Msg )
+init co =
+    ( { notes = initialModel, time = 0, context = co }
     , Cmd.none
     )
 
@@ -103,6 +104,7 @@ type Msg
       --
     | TransposeUp
     | TransposeDown
+    | NextStep Float
 
 
 
@@ -122,6 +124,23 @@ noteOn key model =
                         note
                 )
                 model.notes
+    }
+
+
+notePulse : Float -> Model -> Model
+notePulse time model =
+    { model
+        | notes =
+            List.map
+                (\note ->
+                    if note.triggered == True then
+                        { note | triggered = False }
+
+                    else
+                        { note | triggered = True }
+                )
+                model.notes
+        , time = Cont.currentTime model.context
     }
 
 
@@ -186,6 +205,11 @@ update msg model =
 
         TransposeDown ->
             ( transposeDown model
+            , Cmd.none
+            )
+
+        NextStep newTime ->
+            ( notePulse newTime model
             , Cmd.none
             )
 
@@ -313,9 +337,9 @@ view model =
                 [ text "here." ]
             ]
         , p [ class "p-2 my-6" ]
-            [ text """A Web Audio context typically starts in a suspended state. 
+            [ text (Debug.toString model.time ++ """ A Web Audio context typically starts in a suspended state. 
           If you can't hear any sound, click anywhere to resume the audio 
-          context.""" ]
+          context.""") ]
         , div [ class "p-2 my-6" ]
             [ button [ onClick TransposeUp, class "bg-indigo-500 text-white font-bold py-2 px-4 mr-4 rounded" ]
                 [ text "Transpose up" ]
@@ -378,4 +402,5 @@ subscriptions model =
     Sub.batch
         [ Browser.Events.onKeyDown <| noteOnDecoder model.notes
         , Browser.Events.onKeyUp <| noteOffDecoder model.notes
+        , Cont.every 1 model.time NoOp NextStep model.context
         ]

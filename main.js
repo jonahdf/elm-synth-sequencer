@@ -13,6 +13,7 @@ window.addEventListener('click', () => {
 
 const App = Elm.Main.init({
   node: document.querySelector('#app')
+  ,flags: context
 })
 
 App.ports.updateAudio.subscribe(graph => {
