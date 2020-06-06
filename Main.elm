@@ -4,6 +4,7 @@ port module Main exposing (..)
 --
 --
 
+import Array as A
 import Browser
 import Browser.Events
 import Html exposing (Attribute, Html, a, button, code, div, h1, main_, p, pre, text)
@@ -11,6 +12,7 @@ import Html.Attributes exposing (class, href)
 import Html.Events exposing (onClick)
 import Json.Decode
 import Json.Encode
+import Time
 import WebAudio
 import WebAudio.Context as Cont
 import WebAudio.Program
@@ -54,11 +56,22 @@ type alias Note =
 
 
 --
+--name: name of track, tone: note key, beats: Array of booleans
+
+
+type alias Track =
+    { key : String
+    , midi : Float
+    , beats : A.Array Bool
+    }
 
 
 type alias Model =
     { notes : List Note
+    , tracks : A.Array Track
     , time : Float
+    , beat : Int
+    , len : Int
     , context : Cont.AudioContext
     }
 
@@ -81,13 +94,67 @@ initialModel =
     ]
 
 
+initialTrackHelp : A.Array Track
+initialTrackHelp =
+    A.fromList
+        (List.map
+            (\note ->
+                { key = note.key
+                , midi = note.midi
+                , beats = A.repeat 9 False
+                }
+            )
+            initialModel
+        )
+
+
+trackSet : Model -> String -> Int -> Model
+trackSet model key beat =
+    { model
+        | tracks =
+            A.map
+                (\track ->
+                    if track.key == key then
+                        Track track.key track.midi (A.set beat True track.beats)
+
+                    else
+                        Track track.key track.midi track.beats
+                )
+                model.tracks
+    }
+
+
+trackSetList : Model -> List ( String, Int ) -> Model
+trackSetList model lst =
+    case lst of
+        [] ->
+            model
+
+        ( key, beat ) :: tl ->
+            trackSetList (trackSet model key beat) tl
+
+
 
 --
 
 
-init : Cont.AudioContext -> ( Model, Cmd Msg )
+s =
+    [ ( "a", 2 ), ( "c", 2 ), ( "a", 4 ), ( "d", 3 ), ( "g", 5 ), ( "j", 8 ) ]
+
+
+initialTrack : Model -> Model
+initialTrack model =
+    trackSetList model s
+
+
 init co =
-    ( { notes = initialModel, time = 0, context = co }
+    ( { notes = initialModel
+      , tracks = initialTrackHelp
+      , time = 0
+      , context = co
+      , beat = 0
+      , len = 9
+      }
     , Cmd.none
     )
 
@@ -104,7 +171,7 @@ type Msg
       --
     | TransposeUp
     | TransposeDown
-    | NextStep Float
+    | NextStep Time.Posix
 
 
 
@@ -141,6 +208,31 @@ notePulse time model =
                 )
                 model.notes
         , time = Cont.currentTime model.context
+    }
+
+
+updateTrack : Model -> Model
+updateTrack model =
+    { model
+        | beat =
+            if model.beat == model.len then
+                0
+
+            else
+                model.beat + 1
+        , notes =
+            A.toList
+                (A.map
+                    (\track ->
+                        case A.get model.beat track.beats of
+                            Just bool ->
+                                Note track.key track.midi bool
+
+                            Nothing ->
+                                Note track.key track.midi False
+                    )
+                    model.tracks
+                )
     }
 
 
@@ -209,7 +301,7 @@ update msg model =
             )
 
         NextStep newTime ->
-            ( notePulse newTime model
+            ( updateTrack (initialTrack model)
             , Cmd.none
             )
 
@@ -402,5 +494,7 @@ subscriptions model =
     Sub.batch
         [ Browser.Events.onKeyDown <| noteOnDecoder model.notes
         , Browser.Events.onKeyUp <| noteOffDecoder model.notes
-        , Cont.every 1 model.time NoOp NextStep model.context
+        , Time.every 300 NextStep
+
+        --, Cont.every 3 model.time NoOp NextStep model.context
         ]
