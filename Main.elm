@@ -21,8 +21,8 @@ import Html
         , pre
         , text
         )
-import Html.Attributes exposing (class, href, style)
-import Html.Events exposing (onClick)
+import Html.Attributes as H exposing (class, href, style)
+import Html.Events exposing (onClick, onInput)
 import Json.Decode
 import Json.Encode
 import Time
@@ -86,6 +86,8 @@ type alias Model =
     , len : Int
     , context : Cont.AudioContext
     , go : Bool
+    , transpose : Float
+    , bpm : Float
     }
 
 
@@ -212,6 +214,8 @@ init co =
       , beat = 0
       , len = 4
       , go = True
+      , transpose = 0
+      , bpm = 120
       }
     , Cmd.none
     )
@@ -251,6 +255,7 @@ type Msg
     | ToggleNote Float Int
     | PauseToggle
     | Clear
+    | Bpm String
 
 
 
@@ -322,14 +327,14 @@ updateTrack model =
 transposeUp : Model -> Model
 transposeUp model =
     { model
-        | notes = List.map (\note -> { note | midi = note.midi + 1 }) model.notes
+        | transpose = model.transpose + 0.5
     }
 
 
 transposeDown : Model -> Model
 transposeDown model =
     { model
-        | notes = List.map (\note -> { note | midi = note.midi - 1 }) model.notes
+        | transpose = model.transpose - 0.5
     }
 
 
@@ -349,6 +354,7 @@ pauseToggle model =
 
             else
                 True
+        , notes = []
     }
 
 
@@ -359,6 +365,19 @@ clear model =
             A.map
                 (\track -> { track | beats = A.repeat model.len False })
                 model.tracks
+    }
+
+
+updateBpm : Model -> String -> Model
+updateBpm model string =
+    { model
+        | bpm =
+            case String.toFloat string of
+                Just i ->
+                    i
+
+                Nothing ->
+                    model.bpm
     }
 
 
@@ -411,6 +430,9 @@ update msg model =
         Clear ->
             ( clear model, Cmd.none )
 
+        Bpm string ->
+            ( updateBpm model string, Cmd.none )
+
 
 
 -- AUDIO ----------------------------------------------------------------------
@@ -429,9 +451,9 @@ mtof midi =
 -- This takes a Note (as defined above) and converts that to a synth voice.
 
 
-voice : Note -> WebAudio.Node
-voice note =
-    WebAudio.oscillator [ Prop.frequency <| mtof note.midi ]
+voice : Float -> Note -> WebAudio.Node
+voice transpose note =
+    WebAudio.oscillator [ Prop.frequency <| mtof (note.midi + transpose) ]
         [ WebAudio.gain
             [ Prop.gain <|
                 if note.triggered then
@@ -454,7 +476,7 @@ voice note =
 
 audio : Model -> WebAudio.Graph
 audio model =
-    List.map voice model.notes
+    List.map (voice model.transpose) model.notes
 
 
 
@@ -523,17 +545,36 @@ view : Model -> Html Msg
 view model =
     main_ [ class "m-10" ]
         [ h1 [ class "text-3xl my-10" ]
-            [ text "elm synth sequencer by Jonah Fleishhacker" ]
+            [ text "Elm Synth Sequencer by Jonah Fleishhacker" ]
         , div [ class "p-2 my-6" ]
             [ button [ onClick TransposeUp, class "bg-indigo-500 text-white font-bold py-2 px-4 mr-4 rounded" ]
                 [ text "Transpose up" ]
             , button [ onClick TransposeDown, class "bg-indigo-500 text-white\n            font-bold py-2 px-4 mr-4 rounded" ]
                 [ text "Transpose down" ]
             , button [ onClick PauseToggle, class "bg-indigo-500 text-white\n\n            font-bold py-2 px-4 mr-4 rounded" ]
-                [ text "Pause" ]
-            , button [ onClick Clear, class "bg-indigo-500 text-white font-bold\n            py-2 px-4 rounded" ]
+                [ if model.go then
+                    text "Pause"
+
+                  else
+                    text "Play"
+                ]
+            , button [ onClick Clear, class "bg-indigo-500 text-white\n            font-bold\n            py-2 px-4 mr-4 rounded" ]
                 [ text "Clear" ]
             ]
+        , Html.input
+            [ H.type_ "range"
+            , class "bg-indigo-500 mr-4"
+            , style "padding" "10px"
+            , H.min "50"
+            , H.max "500"
+            , H.value
+                (Debug.toString
+                    model.bpm
+                )
+            , onInput Bpm
+            ]
+            []
+        , div [ class "flex", style "padding-bottom" "30px" ] [ text (" BPM: " ++ Debug.toString model.bpm) ]
         , div [ class "flex" ] <|
             List.map noteView model.notes
         , div []
@@ -589,7 +630,7 @@ subscriptions model =
     Sub.batch
         [ --Browser.Events.onKeyDown <| noteOnDecoder model.notes
           --, Browser.Events.onKeyUp <| noteOffDecoder model.notes
-          Time.every 300 NextStep
+          Time.every (60000 / model.bpm) NextStep
 
         --, Cont.every 3 model.time NoOp NextStep model.context
         ]
