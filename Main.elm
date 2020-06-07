@@ -7,8 +7,21 @@ port module Main exposing (..)
 import Array as A
 import Browser
 import Browser.Events
-import Html exposing (Attribute, Html, a, button, code, div, h1, main_, p, pre, text)
-import Html.Attributes exposing (class, href)
+import Html
+    exposing
+        ( Attribute
+        , Html
+        , a
+        , button
+        , code
+        , div
+        , h1
+        , main_
+        , p
+        , pre
+        , text
+        )
+import Html.Attributes exposing (class, href, style)
 import Html.Events exposing (onClick)
 import Json.Decode
 import Json.Encode
@@ -69,10 +82,10 @@ type alias Track =
 type alias Model =
     { notes : List Note
     , tracks : A.Array Track
-    , time : Float
     , beat : Int
     , len : Int
     , context : Cont.AudioContext
+    , go : Bool
     }
 
 
@@ -82,16 +95,20 @@ type alias Model =
 
 initialModel : List Note
 initialModel =
-    [ { key = "a", midi = 60, triggered = False }
-    , { key = "s", midi = 62, triggered = False }
-    , { key = "d", midi = 64, triggered = False }
+    [ { key = "c", midi = 60, triggered = False }
+    , { key = "d", midi = 62, triggered = False }
+    , { key = "e", midi = 64, triggered = False }
     , { key = "f", midi = 65, triggered = False }
     , { key = "g", midi = 67, triggered = False }
-    , { key = "h", midi = 69, triggered = False }
-    , { key = "j", midi = 71, triggered = False }
-    , { key = "k", midi = 72, triggered = False }
-    , { key = "l", midi = 74, triggered = False }
+    , { key = "a", midi = 69, triggered = False }
+    , { key = "b", midi = 71, triggered = False }
+    , { key = "c", midi = 72, triggered = False }
+    , { key = "d", midi = 74, triggered = False }
     ]
+
+
+midis =
+    [ 60, 62, 64, 65, 67, 69, 71, 72, 74 ]
 
 
 initialTrackHelp : A.Array Track
@@ -101,62 +118,121 @@ initialTrackHelp =
             (\note ->
                 { key = note.key
                 , midi = note.midi
-                , beats = A.repeat 9 False
+                , beats = A.repeat 4 False
                 }
             )
             initialModel
         )
 
 
-trackSet : Model -> String -> Int -> Model
-trackSet model key beat =
-    { model
-        | tracks =
-            A.map
-                (\track ->
-                    if track.key == key then
-                        Track track.key track.midi (A.set beat True track.beats)
+trackToggle : A.Array Track -> Float -> Int -> A.Array Track
+trackToggle tracks midi beat =
+    A.map
+        (\track ->
+            if track.midi == midi then
+                case A.get beat track.beats of
+                    Just bool ->
+                        Track track.key
+                            track.midi
+                            (A.set beat
+                                (not bool)
+                                track.beats
+                            )
 
-                    else
+                    Nothing ->
                         Track track.key track.midi track.beats
-                )
-                model.tracks
-    }
+
+            else
+                Track track.key track.midi track.beats
+        )
+        tracks
 
 
-trackSetList : Model -> List ( String, Int ) -> Model
-trackSetList model lst =
+trackSetList : A.Array Track -> List ( Float, Int ) -> A.Array Track
+trackSetList tracks lst =
     case lst of
         [] ->
-            model
+            tracks
 
-        ( key, beat ) :: tl ->
-            trackSetList (trackSet model key beat) tl
+        ( midi, beat ) :: tl ->
+            trackSetList (trackToggle tracks midi beat) tl
+
+
+getValIndex : Model -> Int -> Int -> Bool
+getValIndex model index beat =
+    case A.get index model.tracks of
+        Just t ->
+            case A.get beat t.beats of
+                Just b ->
+                    b
+
+                Nothing ->
+                    False
+
+        Nothing ->
+            False
 
 
 
 --
 
 
-s =
-    [ ( "a", 2 ), ( "c", 2 ), ( "a", 4 ), ( "d", 3 ), ( "g", 5 ), ( "j", 8 ) ]
+getVal : Model -> Float -> Int -> Bool
+getVal model midi beat =
+    getValIndex model (midiToIndex model midi) beat
 
 
-initialTrack : Model -> Model
-initialTrack model =
-    trackSetList model s
+midiToIndex : Model -> Float -> Int
+midiToIndex model midi =
+    let
+        check i lst =
+            case lst of
+                [] ->
+                    Debug.todo "not in model"
+
+                h :: tl ->
+                    if h.midi == midi then
+                        i
+
+                    else
+                        check (i + 1) tl
+    in
+    check 0 (A.toList model.tracks)
+
+
+initialTrack : A.Array Track
+initialTrack =
+    trackSetList initialTrackHelp s
 
 
 init co =
     ( { notes = initialModel
-      , tracks = initialTrackHelp
-      , time = 0
+      , tracks = initialTrack
       , context = co
       , beat = 0
-      , len = 9
+      , len = 4
+      , go = True
       }
     , Cmd.none
     )
+
+
+
+{- s =
+   [ ( 60, 2 )
+   , ( 62, 2 )
+   , ( 64, 4 )
+   , ( 65, 3 )
+   , ( 67, 5 )
+   , ( 69
+     , 8
+     )
+   ]
+-}
+
+
+s =
+    []
 
 
 
@@ -166,49 +242,35 @@ init co =
 type Msg
     = NoOp
       --
-    | NoteOn String
-    | NoteOff String
+      --| NoteOn String
+      --| NoteOff String
       --
     | TransposeUp
     | TransposeDown
     | NextStep Time.Posix
+    | ToggleNote Float Int
+    | PauseToggle
+    | Clear
 
 
 
 --
+{-
+   noteOn : String -> Model -> Model
+   noteOn key model =
+       { model
+           | notes =
+               List.map
+                   (\note ->
+                       if note.key == key then
+                           { note | triggered = True }
 
-
-noteOn : String -> Model -> Model
-noteOn key model =
-    { model
-        | notes =
-            List.map
-                (\note ->
-                    if note.key == key then
-                        { note | triggered = True }
-
-                    else
-                        note
-                )
-                model.notes
-    }
-
-
-notePulse : Float -> Model -> Model
-notePulse time model =
-    { model
-        | notes =
-            List.map
-                (\note ->
-                    if note.triggered == True then
-                        { note | triggered = False }
-
-                    else
-                        { note | triggered = True }
-                )
-                model.notes
-        , time = Cont.currentTime model.context
-    }
+                       else
+                           note
+                   )
+                   model.notes
+       }
+-}
 
 
 updateTrack : Model -> Model
@@ -238,22 +300,23 @@ updateTrack model =
 
 
 --
+{-
+   noteOff : String -> Model -> Model
+   noteOff key model =
+       { model
+           | notes =
+               List.map
+                   (\note ->
+                       if note.key == key then
+                           { note | triggered = False }
 
+                       else
+                           note
+                   )
+                   model.notes
+       }
 
-noteOff : String -> Model -> Model
-noteOff key model =
-    { model
-        | notes =
-            List.map
-                (\note ->
-                    if note.key == key then
-                        { note | triggered = False }
-
-                    else
-                        note
-                )
-                model.notes
-    }
+-}
 
 
 transposeUp : Model -> Model
@@ -270,6 +333,35 @@ transposeDown model =
     }
 
 
+updateToggle : Model -> Float -> Int -> Model
+updateToggle model midi beat =
+    { model
+        | tracks = trackToggle model.tracks midi beat
+    }
+
+
+pauseToggle : Model -> Model
+pauseToggle model =
+    { model
+        | go =
+            if model.go then
+                False
+
+            else
+                True
+    }
+
+
+clear : Model -> Model
+clear model =
+    { model
+        | tracks =
+            A.map
+                (\track -> { track | beats = A.repeat model.len False })
+                model.tracks
+    }
+
+
 
 --
 
@@ -280,15 +372,19 @@ update msg model =
         NoOp ->
             Tuple.pair model Cmd.none
 
-        NoteOn key ->
-            ( noteOn key model
-            , Cmd.none
-            )
+        {-
+           NoteOn key ->
+               ( noteOn key model
+               , Cmd.none
+               )
 
-        NoteOff key ->
-            ( noteOff key model
-            , Cmd.none
-            )
+           NoteOff key ->
+               ( noteOff key model
+               , Cmd.none
+               )
+        -}
+        PauseToggle ->
+            ( pauseToggle model, Cmd.none )
 
         TransposeUp ->
             ( transposeUp model
@@ -301,9 +397,19 @@ update msg model =
             )
 
         NextStep newTime ->
-            ( updateTrack (initialTrack model)
-            , Cmd.none
-            )
+            if model.go then
+                ( updateTrack model
+                , Cmd.none
+                )
+
+            else
+                ( model, Cmd.none )
+
+        ToggleNote midi beat ->
+            ( updateToggle model midi beat, Cmd.none )
+
+        Clear ->
+            ( clear model, Cmd.none )
 
 
 
@@ -329,7 +435,7 @@ voice note =
         [ WebAudio.gain
             [ Prop.gain <|
                 if note.triggered then
-                    0.1
+                    0.2
 
                 else
                     0
@@ -360,10 +466,10 @@ audio model =
 noteCSS : Bool -> String
 noteCSS active =
     if active then
-        "bg-indigo-500 text-white font-bold py-2 px-4 rounded"
+        "bg-indigo-500 text-white font-bold py-2 px-4 mr-4 rounded"
 
     else
-        "bg-indigo-100 text-black font-bold py-2 px-4 rounded"
+        "bg-indigo-100 text-black font-bold py-2 px-4 mr-4 rounded"
 
 
 
@@ -378,123 +484,112 @@ noteView note =
         [ text note.key ]
 
 
-audioView : List Note -> List (Html Msg)
-audioView =
-    List.map
-        (\note ->
-            voice note
-                |> WebAudio.encode
-                |> Json.Encode.encode 2
-                |> (\json ->
-                        pre
-                            [ class "text-xs"
-                            , class <|
-                                if note.triggered then
-                                    "text-gray-800"
-
-                                else
-                                    "text-gray-500"
-                            ]
-                            [ code [ class "my-2" ]
-                                [ text json ]
-                            ]
-                   )
-        )
-
-
 
 --
+
+
+viewSquare : Model -> Float -> Int -> Html Msg
+viewSquare model midi beat =
+    button
+        [ onClick (ToggleNote midi beat)
+        , class
+            (noteCSS
+                (getVal model
+                    midi
+                    beat
+                )
+            )
+        , style "padding" "20px"
+        ]
+        [ text (Debug.toString beat) ]
+
+
+viewTrack : Model -> Float -> Html Msg
+viewTrack model midi =
+    div [ class "track" ]
+        [ p [] [ text (Debug.toString midi) ]
+        , div []
+            (List.map
+                (\x -> viewSquare model midi x)
+                (List.range
+                    0
+                    (model.len - 1)
+                )
+            )
+        ]
 
 
 view : Model -> Html Msg
 view model =
     main_ [ class "m-10" ]
         [ h1 [ class "text-3xl my-10" ]
-            [ text "elm-web-audio" ]
-        , p [ class "p-2 my-6" ]
-            [ text """This package provides an elm/html-like API for declaring Web 
-          Audio graphs in Elm. The intention being that these `virtual` audio 
-          graphs are then sent via a port to be constructed by a javascript. 
-          There is a reference implementation of this found in the repository 
-          that you are free to copy until I or someone else releases a package 
-          formally.""" ]
-        , p [ class "p-2 my-6" ]
-            [ text """This site primarily serves as a demonstration that the library
-          actually works. If you'd like some more in depth documentation on the
-          Elm library itself you should check out the package """
-            , a
-                [ href "https://package.elm-lang.org/packages/pd-andy/elm-web-audio/1.0.0/"
-                , class "text-indigo-500 hover:text-indigo-700"
-                ]
-                [ text "here." ]
-            ]
-        , p [ class "p-2 my-6" ]
-            [ text (Debug.toString model.time ++ """ A Web Audio context typically starts in a suspended state. 
-          If you can't hear any sound, click anywhere to resume the audio 
-          context.""") ]
+            [ text "elm synth sequencer by Jonah Fleishhacker" ]
         , div [ class "p-2 my-6" ]
             [ button [ onClick TransposeUp, class "bg-indigo-500 text-white font-bold py-2 px-4 mr-4 rounded" ]
                 [ text "Transpose up" ]
-            , button [ onClick TransposeDown, class "bg-indigo-500 text-white font-bold py-2 px-4 rounded" ]
+            , button [ onClick TransposeDown, class "bg-indigo-500 text-white\n            font-bold py-2 px-4 mr-4 rounded" ]
                 [ text "Transpose down" ]
+            , button [ onClick PauseToggle, class "bg-indigo-500 text-white\n\n            font-bold py-2 px-4 mr-4 rounded" ]
+                [ text "Pause" ]
+            , button [ onClick Clear, class "bg-indigo-500 text-white font-bold\n            py-2 px-4 rounded" ]
+                [ text "Clear" ]
             ]
         , div [ class "flex" ] <|
             List.map noteView model.notes
-        , div [ class "p-2 my-10" ]
-            [ text """Below is the json send via ports to javascript. Active notes 
-          are highlighted.""" ]
-        , div [ class "bg-gray-200 p-2 my-10 rounded h-64 overflow-scroll" ] <|
-            audioView model.notes
+        , div []
+            (List.map
+                (\midi -> viewTrack model midi)
+                midis
+            )
         ]
 
 
 
 -- SUBSCRIPTIONS --------------------------------------------------------------
 --
+{-
 
+   noteOnDecoder : List Note -> Json.Decode.Decoder Msg
+   noteOnDecoder notes =
+       Json.Decode.field "key" Json.Decode.string
+           |> Json.Decode.andThen
+               (\key ->
+                   case List.any (\note -> note.key == key) notes of
+                       True ->
+                           Json.Decode.succeed (NoteOn key)
 
-noteOnDecoder : List Note -> Json.Decode.Decoder Msg
-noteOnDecoder notes =
-    Json.Decode.field "key" Json.Decode.string
-        |> Json.Decode.andThen
-            (\key ->
-                case List.any (\note -> note.key == key) notes of
-                    True ->
-                        Json.Decode.succeed (NoteOn key)
-
-                    False ->
-                        Json.Decode.fail ""
-            )
-
-
-
---
-
-
-noteOffDecoder : List Note -> Json.Decode.Decoder Msg
-noteOffDecoder notes =
-    Json.Decode.field "key" Json.Decode.string
-        |> Json.Decode.andThen
-            (\key ->
-                case List.any (\note -> note.key == key) notes of
-                    True ->
-                        Json.Decode.succeed (NoteOff key)
-
-                    False ->
-                        Json.Decode.fail ""
-            )
+                       False ->
+                           Json.Decode.fail ""
+               )
 
 
 
+   --
+
+
+   noteOffDecoder : List Note -> Json.Decode.Decoder Msg
+   noteOffDecoder notes =
+       Json.Decode.field "key" Json.Decode.string
+           |> Json.Decode.andThen
+               (\key ->
+                   case List.any (\note -> note.key == key) notes of
+                       True ->
+                           Json.Decode.succeed (NoteOff key)
+
+                       False ->
+                           Json.Decode.fail ""
+               )
+
+-}
 --
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Browser.Events.onKeyDown <| noteOnDecoder model.notes
-        , Browser.Events.onKeyUp <| noteOffDecoder model.notes
-        , Time.every 300 NextStep
+        [ --Browser.Events.onKeyDown <| noteOnDecoder model.notes
+          --, Browser.Events.onKeyUp <| noteOffDecoder model.notes
+          Time.every 300 NextStep
 
         --, Cont.every 3 model.time NoOp NextStep model.context
         ]
