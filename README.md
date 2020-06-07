@@ -8,3 +8,6 @@ elm make Main.elm --output=elm.js
 ~~~
 
 Open elm.js on your desired browser or server and enjoy!
+
+### Or play around with it here!
+https://jonahdf.github.io/elm-synth-sequencer/
