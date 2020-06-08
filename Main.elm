@@ -693,7 +693,7 @@ viewMeter model beat =
         [ style "padding" "20px"
         , class
             (noteCSS
-                (if beat == 8 then
+                (if beat == model.len then
                     model.beat == 0
 
                  else
@@ -765,7 +765,6 @@ view model =
         [ h1 [ class "text-3xl my-10" ]
             [ text "Elm Synth Sequencer by Jonah Fleishhacker" ]
         , Html.h2 [] [ text "Scale : " ]
-        , Html.h2 [] [ text (Debug.toString model.beat) ]
         , viewScales model
         , Html.h2 [] [ text "Piano Wave Type: " ]
         , viewTypes model "piano"
