@@ -91,6 +91,8 @@ type alias Model =
     , transpose : Float
     , bpm : Float
     , scale : Scale
+    , seqType : String
+    , pianoType : String
     }
 
 
@@ -99,22 +101,72 @@ scales =
     Dict.fromList
         [ ( "Diatonic"
           , Scale "Diatonic"
-                [ ( "c", 60 ), ( "d", 62 ), ( "e", 64 ), ( "f", 65 ), ( "g", 67 ), ( "a", 69 ), ( "b", 71 ), ( "c", 72 ), ( "d", 74 ), ( "e", 76 ) ]
+                [ ( "C4", 60 )
+                , ( "D4", 62 )
+                , ( "E4", 64 )
+                , ( "F4", 65 )
+                , ( "G4", 67 )
+                , ( "A4", 69 )
+                , ( "B4", 71 )
+                , ( "C5", 72 )
+                , ( "D5", 74 )
+                , ( "E5", 76 )
+                ]
           )
         , ( "Pentatonic"
           , Scale "Pentatonic"
-                [ ( "c", 60 )
-                , ( "d", 62 )
-                , ( "e", 64 )
-                , ( "g", 67 )
-                , ( "a"
-                  , 69
-                  )
-                , ( "c", 72 )
-                , ( "d", 74 )
-                , ( "e", 76 )
-                , ( "g", 79 )
-                , ( "a", 81 )
+                [ ( "C4", 60 )
+                , ( "D4", 62 )
+                , ( "E4", 64 )
+                , ( "G4", 67 )
+                , ( "A4", 69 )
+                , ( "C5", 72 )
+                , ( "D5", 74 )
+                , ( "E5", 76 )
+                , ( "G5", 79 )
+                , ( "A5", 81 )
+                ]
+          )
+        , ( "Blues"
+          , Scale "Blues"
+                [ ( "C4", 60 )
+                , ( "Eb4", 63 )
+                , ( "F4", 65 )
+                , ( "Gb4", 66 )
+                , ( "G4", 67 )
+                , ( "B4", 70 )
+                , ( "C5", 72 )
+                , ( "Eb5", 75 )
+                , ( "F5", 77 )
+                , ( "Gb5", 78 )
+                ]
+          )
+        , ( "Major Arpeggio"
+          , Scale "Major Arpeggio"
+                [ ( "C3", 48 )
+                , ( "E3", 52 )
+                , ( "G3", 55 )
+                , ( "C4", 60 )
+                , ( "E4", 64 )
+                , ( "G4", 67 )
+                , ( "C5", 72 )
+                , ( "E5", 76 )
+                , ( "G5", 79 )
+                , ( "C6", 84 )
+                ]
+          )
+        , ( "Minor Arpeggio"
+          , Scale "Minor Arpeggio"
+                [ ( "A2", 45 )
+                , ( "C3", 48 )
+                , ( "E3", 52 )
+                , ( "A3", 57 )
+                , ( "C4", 60 )
+                , ( "E4", 64 )
+                , ( "A4", 69 )
+                , ( "C5", 72 )
+                , ( "E5", 76 )
+                , ( "A5", 81 )
                 ]
           )
         ]
@@ -122,22 +174,17 @@ scales =
 
 pentatonic =
     Scale "Pentatonic"
-        [ ( "c", 60 )
-        , ( "d", 62 )
-        , ( "e", 64 )
-        , ( "g", 67 )
-        , ( "a", 69 )
-        , ( "c", 72 )
-        , ( "d", 74 )
-        , ( "e", 76 )
-        , ( "g", 79 )
-        , ( "a", 81 )
+        [ ( "C4", 60 )
+        , ( "D4", 62 )
+        , ( "E4", 64 )
+        , ( "G4", 67 )
+        , ( "A4", 69 )
+        , ( "C5", 72 )
+        , ( "D5", 74 )
+        , ( "E5", 76 )
+        , ( "G5", 79 )
+        , ( "A5", 81 )
         ]
-
-
-diatonic =
-    Scale "Diatonic"
-        [ ( "c", 60 ), ( "d", 62 ), ( "e", 64 ), ( "f", 65 ), ( "g", 67 ), ( "a", 69 ), ( "b", 71 ), ( "c", 72 ), ( "d", 74 ), ( "e", 76 ) ]
 
 
 type alias Scale =
@@ -255,6 +302,8 @@ init co =
       , transpose = 0
       , bpm = 200
       , scale = pentatonic
+      , seqType = "sawtooth"
+      , pianoType = "sawtooth"
       }
     , Cmd.none
     )
@@ -279,6 +328,8 @@ type Msg
     | Bpm String
     | ChangeBeats String
     | ChangeScale String
+    | ChangePianoType String
+    | ChangeSeqType String
 
 
 
@@ -426,7 +477,7 @@ updateReset model =
 updateScale model string =
     let
         newScale =
-            Maybe.withDefault diatonic (Dict.get string scales)
+            Maybe.withDefault pentatonic (Dict.get string scales)
     in
     { model
         | notes = scaleInit newScale
@@ -436,8 +487,18 @@ updateScale model string =
     }
 
 
+updatePianoType : Model -> String -> Model
+updatePianoType model string =
+    { model
+        | pianoType = String.toLower string
+    }
 
---
+
+updateSeqType : Model -> String -> Model
+updateSeqType model string =
+    { model
+        | seqType = String.toLower string
+    }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -491,6 +552,12 @@ update msg model =
         ChangeScale string ->
             ( updateScale model string, Cmd.none )
 
+        ChangePianoType string ->
+            ( updatePianoType model string, Cmd.none )
+
+        ChangeSeqType string ->
+            ( updateSeqType model string, Cmd.none )
+
 
 
 -- AUDIO ----------------------------------------------------------------------
@@ -509,13 +576,16 @@ mtof midi =
 -- This takes a Note (as defined above) and converts that to a synth voice.
 
 
-voice : Float -> Note -> WebAudio.Node
-voice transpose note =
-    WebAudio.oscillator [ Prop.frequency <| mtof (note.midi + transpose) ]
+voice : Float -> String -> Note -> WebAudio.Node
+voice transpose waveType note =
+    WebAudio.oscillator
+        [ Prop.frequency <| mtof (note.midi + transpose)
+        , Prop.type_ waveType
+        ]
         [ WebAudio.gain
             [ Prop.gain <|
                 if note.triggered then
-                    0.3
+                    0.1
 
                 else
                     0
@@ -524,13 +594,16 @@ voice transpose note =
         ]
 
 
-voicePiano : Float -> Note -> WebAudio.Node
-voicePiano transpose note =
-    WebAudio.oscillator [ Prop.frequency <| mtof (note.midi + transpose) ]
+voicePiano : Float -> String -> Note -> WebAudio.Node
+voicePiano transpose waveType note =
+    WebAudio.oscillator
+        [ Prop.frequency <| mtof (note.midi + transpose)
+        , Prop.type_ waveType
+        ]
         [ WebAudio.gain
             [ Prop.gain <|
                 if note.triggered then
-                    0.3
+                    0.1
 
                 else
                     0
@@ -549,8 +622,8 @@ voicePiano transpose note =
 
 audio : Model -> WebAudio.Graph
 audio model =
-    List.map (voice model.transpose) model.notes
-        ++ List.map (voicePiano model.transpose) model.piano
+    List.map (voice model.transpose model.seqType) model.notes
+        ++ List.map (voicePiano model.transpose model.pianoType) model.piano
 
 
 
@@ -637,7 +710,13 @@ viewScales model =
             [ onInput ChangeScale ]
             (List.map
                 (\name ->
-                    Html.option [ H.value name ]
+                    Html.option
+                        [ H.value name
+                        , H.selected
+                            (name
+                                == "Pentatonic"
+                            )
+                        ]
                         [ text
                             name
                         ]
@@ -647,14 +726,50 @@ viewScales model =
         ]
 
 
+viewTypes : Model -> String -> Html Msg
+viewTypes model version =
+    div
+        [ class "mx-2" ]
+        [ Html.select
+            [ onInput
+                (if version == "piano" then
+                    ChangePianoType
+
+                 else
+                    ChangeSeqType
+                )
+            ]
+            (List.map
+                (\name ->
+                    Html.option
+                        [ H.value name
+                        , H.selected
+                            (name
+                                == "Sawtooth"
+                            )
+                        ]
+                        [ text
+                            name
+                        ]
+                )
+                [ "Triangle", "Square", "Sine", "Sawtooth" ]
+            )
+        ]
+
+
 view : Model -> Html Msg
 view model =
     main_ [ class "m-10" ]
         [ h1 [ class "text-3xl my-10" ]
             [ text "Elm Synth Sequencer by Jonah Fleishhacker" ]
-        , Html.h3 [ style "text-align" "center" ] [ Html.u [] [ text "Piano" ] ]
+        , Html.h2 [] [ text "Scale : " ]
+        , viewScales model
+        , Html.h2 [] [ text "Piano Wave Type: " ]
+        , viewTypes model "piano"
         , div [ class "flex", style "padding" "10px" ] <|
             List.map noteView model.piano
+        , Html.hr [] []
+        , Html.h3 [ style "text-align" "center" ] [ Html.u [] [ text "Sequencer\n        Settings" ] ]
         , div [ class "p-2 my-6" ]
             [ button [ onClick PauseToggle, class "bg-indigo-500 text-white\n\n            font-bold py-2 px-4 mr-4 rounded" ]
                 [ if model.go then
@@ -718,8 +833,8 @@ view model =
                 []
             , text ("Beats: " ++ Debug.toString model.len)
             ]
-        , Html.h2 [] [ text "Scale : " ]
-        , viewScales model
+        , Html.h2 [] [ text "Sequencer Wave type: " ]
+        , viewTypes model "seq"
         , Html.hr [] []
         , Html.h3 [ style "text-align" "center" ] [ Html.u [] [ text "Sequencer\n        Notes" ] ]
         , div [ class "flex", style "padding" "10px" ] <|

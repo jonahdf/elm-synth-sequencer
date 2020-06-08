@@ -5020,14 +5020,26 @@ var $author$project$Main$mtof = function (midi) {
 	return 440 * A2($elm$core$Basics$pow, 2, (midi - 69) / 12);
 };
 var $pd_andy$elm_web_audio$WebAudio$oscillator = $pd_andy$elm_web_audio$WebAudio$Node('OscillatorNode');
-var $author$project$Main$voice = F2(
-	function (transpose, note) {
+var $pd_andy$elm_web_audio$WebAudio$Property$NodeProperty = F2(
+	function (a, b) {
+		return {$: 'NodeProperty', a: a, b: b};
+	});
+var $pd_andy$elm_web_audio$WebAudio$Property$nodeProperty = $pd_andy$elm_web_audio$WebAudio$Property$NodeProperty;
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $pd_andy$elm_web_audio$WebAudio$Property$string = A2($elm$core$Basics$composeR, $elm$json$Json$Encode$string, $pd_andy$elm_web_audio$WebAudio$Property$Value);
+var $pd_andy$elm_web_audio$WebAudio$Property$type_ = A2(
+	$elm$core$Basics$composeR,
+	$pd_andy$elm_web_audio$WebAudio$Property$string,
+	$pd_andy$elm_web_audio$WebAudio$Property$nodeProperty('type'));
+var $author$project$Main$voice = F3(
+	function (transpose, waveType, note) {
 		return A2(
 			$pd_andy$elm_web_audio$WebAudio$oscillator,
 			_List_fromArray(
 				[
 					$pd_andy$elm_web_audio$WebAudio$Property$frequency(
-					$author$project$Main$mtof(note.midi + transpose))
+					$author$project$Main$mtof(note.midi + transpose)),
+					$pd_andy$elm_web_audio$WebAudio$Property$type_(waveType)
 				]),
 			_List_fromArray(
 				[
@@ -5036,20 +5048,21 @@ var $author$project$Main$voice = F2(
 					_List_fromArray(
 						[
 							$pd_andy$elm_web_audio$WebAudio$Property$gain(
-							note.triggered ? 0.3 : 0)
+							note.triggered ? 0.1 : 0)
 						]),
 					_List_fromArray(
 						[$pd_andy$elm_web_audio$WebAudio$dac]))
 				]));
 	});
-var $author$project$Main$voicePiano = F2(
-	function (transpose, note) {
+var $author$project$Main$voicePiano = F3(
+	function (transpose, waveType, note) {
 		return A2(
 			$pd_andy$elm_web_audio$WebAudio$oscillator,
 			_List_fromArray(
 				[
 					$pd_andy$elm_web_audio$WebAudio$Property$frequency(
-					$author$project$Main$mtof(note.midi + transpose))
+					$author$project$Main$mtof(note.midi + transpose)),
+					$pd_andy$elm_web_audio$WebAudio$Property$type_(waveType)
 				]),
 			_List_fromArray(
 				[
@@ -5058,7 +5071,7 @@ var $author$project$Main$voicePiano = F2(
 					_List_fromArray(
 						[
 							$pd_andy$elm_web_audio$WebAudio$Property$gain(
-							note.triggered ? 0.3 : 0)
+							note.triggered ? 0.1 : 0)
 						]),
 					_List_fromArray(
 						[$pd_andy$elm_web_audio$WebAudio$dac]))
@@ -5068,11 +5081,11 @@ var $author$project$Main$audio = function (model) {
 	return _Utils_ap(
 		A2(
 			$elm$core$List$map,
-			$author$project$Main$voice(model.transpose),
+			A2($author$project$Main$voice, model.transpose, model.seqType),
 			model.notes),
 		A2(
 			$elm$core$List$map,
-			$author$project$Main$voicePiano(model.transpose),
+			A2($author$project$Main$voicePiano, model.transpose, model.pianoType),
 			model.piano));
 };
 var $elm$json$Json$Decode$map = _Json_map1;
@@ -5318,7 +5331,6 @@ var $elm$core$Task$perform = F2(
 	});
 var $elm$browser$Browser$element = _Browser_element;
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
-var $elm$json$Json$Encode$string = _Json_wrap;
 var $pd_andy$elm_web_audio$WebAudio$Property$encodeScheduledUpdateMethod = function (method) {
 	switch (method.$) {
 		case 'SetValueAtTime':
@@ -5528,16 +5540,16 @@ var $author$project$Main$pentatonic = A2(
 	'Pentatonic',
 	_List_fromArray(
 		[
-			_Utils_Tuple2('c', 60),
-			_Utils_Tuple2('d', 62),
-			_Utils_Tuple2('e', 64),
-			_Utils_Tuple2('g', 67),
-			_Utils_Tuple2('a', 69),
-			_Utils_Tuple2('c', 72),
-			_Utils_Tuple2('d', 74),
-			_Utils_Tuple2('e', 76),
-			_Utils_Tuple2('g', 79),
-			_Utils_Tuple2('a', 81)
+			_Utils_Tuple2('C4', 60),
+			_Utils_Tuple2('D4', 62),
+			_Utils_Tuple2('E4', 64),
+			_Utils_Tuple2('G4', 67),
+			_Utils_Tuple2('A4', 69),
+			_Utils_Tuple2('C5', 72),
+			_Utils_Tuple2('D5', 74),
+			_Utils_Tuple2('E5', 76),
+			_Utils_Tuple2('G5', 79),
+			_Utils_Tuple2('A5', 81)
 		]));
 var $author$project$Main$pianoKeys = function (notes) {
 	return A3(
@@ -5637,7 +5649,9 @@ var $author$project$Main$init = function (co) {
 			notes: $author$project$Main$scaleInit($author$project$Main$pentatonic),
 			piano: $author$project$Main$pianoKeys(
 				$author$project$Main$scaleInit($author$project$Main$pentatonic)),
+			pianoType: 'sawtooth',
 			scale: $author$project$Main$pentatonic,
+			seqType: 'sawtooth',
 			tracks: A2($author$project$Main$trackInit, $author$project$Main$pentatonic, 8),
 			transpose: 0
 		},
@@ -6465,27 +6479,20 @@ var $author$project$Main$updateBpm = F2(
 				}()
 			});
 	});
+var $elm$core$String$toLower = _String_toLower;
+var $author$project$Main$updatePianoType = F2(
+	function (model, string) {
+		return _Utils_update(
+			model,
+			{
+				pianoType: $elm$core$String$toLower(string)
+			});
+	});
 var $author$project$Main$updateReset = function (model) {
 	return _Utils_update(
 		model,
 		{bpm: 200, len: 8, transpose: 0});
 };
-var $author$project$Main$diatonic = A2(
-	$author$project$Main$Scale,
-	'Diatonic',
-	_List_fromArray(
-		[
-			_Utils_Tuple2('c', 60),
-			_Utils_Tuple2('d', 62),
-			_Utils_Tuple2('e', 64),
-			_Utils_Tuple2('f', 65),
-			_Utils_Tuple2('g', 67),
-			_Utils_Tuple2('a', 69),
-			_Utils_Tuple2('b', 71),
-			_Utils_Tuple2('c', 72),
-			_Utils_Tuple2('d', 74),
-			_Utils_Tuple2('e', 76)
-		]));
 var $author$project$Main$scales = $elm$core$Dict$fromList(
 	_List_fromArray(
 		[
@@ -6496,16 +6503,16 @@ var $author$project$Main$scales = $elm$core$Dict$fromList(
 				'Diatonic',
 				_List_fromArray(
 					[
-						_Utils_Tuple2('c', 60),
-						_Utils_Tuple2('d', 62),
-						_Utils_Tuple2('e', 64),
-						_Utils_Tuple2('f', 65),
-						_Utils_Tuple2('g', 67),
-						_Utils_Tuple2('a', 69),
-						_Utils_Tuple2('b', 71),
-						_Utils_Tuple2('c', 72),
-						_Utils_Tuple2('d', 74),
-						_Utils_Tuple2('e', 76)
+						_Utils_Tuple2('C4', 60),
+						_Utils_Tuple2('D4', 62),
+						_Utils_Tuple2('E4', 64),
+						_Utils_Tuple2('F4', 65),
+						_Utils_Tuple2('G4', 67),
+						_Utils_Tuple2('A4', 69),
+						_Utils_Tuple2('B4', 71),
+						_Utils_Tuple2('C5', 72),
+						_Utils_Tuple2('D5', 74),
+						_Utils_Tuple2('E5', 76)
 					]))),
 			_Utils_Tuple2(
 			'Pentatonic',
@@ -6514,16 +6521,70 @@ var $author$project$Main$scales = $elm$core$Dict$fromList(
 				'Pentatonic',
 				_List_fromArray(
 					[
-						_Utils_Tuple2('c', 60),
-						_Utils_Tuple2('d', 62),
-						_Utils_Tuple2('e', 64),
-						_Utils_Tuple2('g', 67),
-						_Utils_Tuple2('a', 69),
-						_Utils_Tuple2('c', 72),
-						_Utils_Tuple2('d', 74),
-						_Utils_Tuple2('e', 76),
-						_Utils_Tuple2('g', 79),
-						_Utils_Tuple2('a', 81)
+						_Utils_Tuple2('C4', 60),
+						_Utils_Tuple2('D4', 62),
+						_Utils_Tuple2('E4', 64),
+						_Utils_Tuple2('G4', 67),
+						_Utils_Tuple2('A4', 69),
+						_Utils_Tuple2('C5', 72),
+						_Utils_Tuple2('D5', 74),
+						_Utils_Tuple2('E5', 76),
+						_Utils_Tuple2('G5', 79),
+						_Utils_Tuple2('A5', 81)
+					]))),
+			_Utils_Tuple2(
+			'Blues',
+			A2(
+				$author$project$Main$Scale,
+				'Blues',
+				_List_fromArray(
+					[
+						_Utils_Tuple2('C4', 60),
+						_Utils_Tuple2('Eb4', 63),
+						_Utils_Tuple2('F4', 65),
+						_Utils_Tuple2('Gb4', 66),
+						_Utils_Tuple2('G4', 67),
+						_Utils_Tuple2('B4', 70),
+						_Utils_Tuple2('C5', 72),
+						_Utils_Tuple2('Eb5', 75),
+						_Utils_Tuple2('F5', 77),
+						_Utils_Tuple2('Gb5', 78)
+					]))),
+			_Utils_Tuple2(
+			'Major Arpeggio',
+			A2(
+				$author$project$Main$Scale,
+				'Major Arpeggio',
+				_List_fromArray(
+					[
+						_Utils_Tuple2('C3', 48),
+						_Utils_Tuple2('E3', 52),
+						_Utils_Tuple2('G3', 55),
+						_Utils_Tuple2('C4', 60),
+						_Utils_Tuple2('E4', 64),
+						_Utils_Tuple2('G4', 67),
+						_Utils_Tuple2('C5', 72),
+						_Utils_Tuple2('E5', 76),
+						_Utils_Tuple2('G5', 79),
+						_Utils_Tuple2('C6', 84)
+					]))),
+			_Utils_Tuple2(
+			'Minor Arpeggio',
+			A2(
+				$author$project$Main$Scale,
+				'Minor Arpeggio',
+				_List_fromArray(
+					[
+						_Utils_Tuple2('A2', 45),
+						_Utils_Tuple2('C3', 48),
+						_Utils_Tuple2('E3', 52),
+						_Utils_Tuple2('A3', 57),
+						_Utils_Tuple2('C4', 60),
+						_Utils_Tuple2('E4', 64),
+						_Utils_Tuple2('A4', 69),
+						_Utils_Tuple2('C5', 72),
+						_Utils_Tuple2('E5', 76),
+						_Utils_Tuple2('A5', 81)
 					])))
 		]));
 var $elm$core$Maybe$withDefault = F2(
@@ -6539,7 +6600,7 @@ var $author$project$Main$updateScale = F2(
 	function (model, string) {
 		var newScale = A2(
 			$elm$core$Maybe$withDefault,
-			$author$project$Main$diatonic,
+			$author$project$Main$pentatonic,
 			A2($elm$core$Dict$get, string, $author$project$Main$scales));
 		return _Utils_update(
 			model,
@@ -6549,6 +6610,14 @@ var $author$project$Main$updateScale = F2(
 					$author$project$Main$scaleInit(newScale)),
 				scale: newScale,
 				tracks: A2($author$project$Main$trackInit, newScale, model.len)
+			});
+	});
+var $author$project$Main$updateSeqType = F2(
+	function (model, string) {
+		return _Utils_update(
+			model,
+			{
+				seqType: $elm$core$String$toLower(string)
 			});
 	});
 var $author$project$Main$Track = F3(
@@ -6756,10 +6825,20 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					A2($author$project$Main$updateBeats, model, string),
 					$elm$core$Platform$Cmd$none);
-			default:
+			case 'ChangeScale':
 				var string = msg.a;
 				return _Utils_Tuple2(
 					A2($author$project$Main$updateScale, model, string),
+					$elm$core$Platform$Cmd$none);
+			case 'ChangePianoType':
+				var string = msg.a;
+				return _Utils_Tuple2(
+					A2($author$project$Main$updatePianoType, model, string),
+					$elm$core$Platform$Cmd$none);
+			default:
+				var string = msg.a;
+				return _Utils_Tuple2(
+					A2($author$project$Main$updateSeqType, model, string),
 					$elm$core$Platform$Cmd$none);
 		}
 	});
@@ -6893,6 +6972,15 @@ var $author$project$Main$ChangeScale = function (a) {
 };
 var $elm$html$Html$option = _VirtualDom_node('option');
 var $elm$html$Html$select = _VirtualDom_node('select');
+var $elm$json$Json$Encode$bool = _Json_wrap;
+var $elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$bool(bool));
+	});
+var $elm$html$Html$Attributes$selected = $elm$html$Html$Attributes$boolProperty('selected');
 var $author$project$Main$viewScales = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -6915,7 +7003,8 @@ var $author$project$Main$viewScales = function (model) {
 							$elm$html$Html$option,
 							_List_fromArray(
 								[
-									$elm$html$Html$Attributes$value(name)
+									$elm$html$Html$Attributes$value(name),
+									$elm$html$Html$Attributes$selected(name === 'Pentatonic')
 								]),
 							_List_fromArray(
 								[
@@ -6956,8 +7045,8 @@ var $author$project$Main$midiToIndex = F2(
 						return _Debug_todo(
 							'Main',
 							{
-								start: {line: 221, column: 21},
-								end: {line: 221, column: 31}
+								start: {line: 268, column: 21},
+								end: {line: 268, column: 31}
 							})('not in model');
 					} else {
 						var h = lst.a;
@@ -7018,6 +7107,48 @@ var $author$project$Main$viewTrack = F2(
 				},
 				A2($elm$core$List$range, 0, model.len - 1)));
 	});
+var $author$project$Main$ChangePianoType = function (a) {
+	return {$: 'ChangePianoType', a: a};
+};
+var $author$project$Main$ChangeSeqType = function (a) {
+	return {$: 'ChangeSeqType', a: a};
+};
+var $author$project$Main$viewTypes = F2(
+	function (model, version) {
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('mx-2')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$select,
+					_List_fromArray(
+						[
+							$elm$html$Html$Events$onInput(
+							(version === 'piano') ? $author$project$Main$ChangePianoType : $author$project$Main$ChangeSeqType)
+						]),
+					A2(
+						$elm$core$List$map,
+						function (name) {
+							return A2(
+								$elm$html$Html$option,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$value(name),
+										$elm$html$Html$Attributes$selected(name === 'Sawtooth')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text(name)
+									]));
+						},
+						_List_fromArray(
+							['Triangle', 'Square', 'Sine', 'Sawtooth'])))
+				]));
+	});
 var $author$project$Main$view = function (model) {
 	return A2(
 		$elm$html$Html$main_,
@@ -7038,6 +7169,31 @@ var $author$project$Main$view = function (model) {
 						$elm$html$Html$text('Elm Synth Sequencer by Jonah Fleishhacker')
 					])),
 				A2(
+				$elm$html$Html$h2,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Scale : ')
+					])),
+				$author$project$Main$viewScales(model),
+				A2(
+				$elm$html$Html$h2,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Piano Wave Type: ')
+					])),
+				A2($author$project$Main$viewTypes, model, 'piano'),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('flex'),
+						A2($elm$html$Html$Attributes$style, 'padding', '10px')
+					]),
+				A2($elm$core$List$map, $author$project$Main$noteView, model.piano)),
+				A2($elm$html$Html$hr, _List_Nil, _List_Nil),
+				A2(
 				$elm$html$Html$h3,
 				_List_fromArray(
 					[
@@ -7050,17 +7206,9 @@ var $author$project$Main$view = function (model) {
 						_List_Nil,
 						_List_fromArray(
 							[
-								$elm$html$Html$text('Piano')
+								$elm$html$Html$text('Sequencer\n        Settings')
 							]))
 					])),
-				A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('flex'),
-						A2($elm$html$Html$Attributes$style, 'padding', '10px')
-					]),
-				A2($elm$core$List$map, $author$project$Main$noteView, model.piano)),
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
@@ -7175,9 +7323,9 @@ var $author$project$Main$view = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Scale : ')
+						$elm$html$Html$text('Sequencer Wave type: ')
 					])),
-				$author$project$Main$viewScales(model),
+				A2($author$project$Main$viewTypes, model, 'seq'),
 				A2($elm$html$Html$hr, _List_Nil, _List_Nil),
 				A2(
 				$elm$html$Html$h3,
