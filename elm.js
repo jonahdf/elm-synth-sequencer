@@ -6585,6 +6585,24 @@ var $author$project$Main$scales = $elm$core$Dict$fromList(
 						_Utils_Tuple2('C5', 72),
 						_Utils_Tuple2('E5', 76),
 						_Utils_Tuple2('A5', 81)
+					]))),
+			_Utils_Tuple2(
+			'Chromatic',
+			A2(
+				$author$project$Main$Scale,
+				'Minor Arpeggio',
+				_List_fromArray(
+					[
+						_Utils_Tuple2('C4', 60),
+						_Utils_Tuple2('C#4', 61),
+						_Utils_Tuple2('D4', 62),
+						_Utils_Tuple2('D#4', 63),
+						_Utils_Tuple2('E4', 64),
+						_Utils_Tuple2('F4', 65),
+						_Utils_Tuple2('F#4', 66),
+						_Utils_Tuple2('G4', 67),
+						_Utils_Tuple2('G#4', 68),
+						_Utils_Tuple2('A4', 69)
 					])))
 		]));
 var $elm$core$Maybe$withDefault = F2(
@@ -7045,8 +7063,8 @@ var $author$project$Main$midiToIndex = F2(
 						return _Debug_todo(
 							'Main',
 							{
-								start: {line: 268, column: 21},
-								end: {line: 268, column: 31}
+								start: {line: 282, column: 21},
+								end: {line: 282, column: 31}
 							})('not in model');
 					} else {
 						var h = lst.a;
