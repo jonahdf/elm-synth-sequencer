@@ -356,7 +356,7 @@ updateTrack : Model -> Model
 updateTrack model =
     { model
         | beat =
-            if model.beat >= model.len then
+            if model.beat >= (model.len - 1) then
                 0
 
             else
@@ -678,12 +678,6 @@ viewSquare model midi beat =
 viewTrack : Model -> Float -> Html Msg
 viewTrack model midi =
     div [ style "padding-bottom" "10px" ]
-        {- text
-           (Debug.toString midi
-               ++ " "
-           )
-           ::
-        -}
         (List.map
             (\x -> viewSquare model midi x)
             (List.range
@@ -697,7 +691,15 @@ viewMeter : Model -> Int -> Html Msg
 viewMeter model beat =
     div
         [ style "padding" "20px"
-        , class (noteCSS (model.beat == beat))
+        , class
+            (noteCSS
+                (if beat == 8 then
+                    model.beat == 0
+
+                 else
+                    model.beat == beat
+                )
+            )
         ]
         [ text (Debug.toString beat) ]
 
@@ -763,6 +765,7 @@ view model =
         [ h1 [ class "text-3xl my-10" ]
             [ text "Elm Synth Sequencer by Jonah Fleishhacker" ]
         , Html.h2 [] [ text "Scale : " ]
+        , Html.h2 [] [ text (Debug.toString model.beat) ]
         , viewScales model
         , Html.h2 [] [ text "Piano Wave Type: " ]
         , viewTypes model "piano"

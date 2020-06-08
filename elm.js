@@ -6745,7 +6745,7 @@ var $author$project$Main$updateTrack = function (model) {
 	return _Utils_update(
 		model,
 		{
-			beat: (_Utils_cmp(model.beat, model.len) > -1) ? 0 : (model.beat + 1),
+			beat: (_Utils_cmp(model.beat, model.len - 1) > -1) ? 0 : (model.beat + 1),
 			notes: $elm$core$Array$toList(
 				A2(
 					$elm$core$Array$map,
@@ -6959,7 +6959,7 @@ var $author$project$Main$viewMeter = F2(
 					A2($elm$html$Html$Attributes$style, 'padding', '20px'),
 					$elm$html$Html$Attributes$class(
 					$author$project$Main$noteCSS(
-						_Utils_eq(model.beat, beat)))
+						(beat === 8) ? (!model.beat) : _Utils_eq(model.beat, beat)))
 				]),
 			_List_fromArray(
 				[
@@ -7174,6 +7174,14 @@ var $author$project$Main$view = function (model) {
 				_List_fromArray(
 					[
 						$elm$html$Html$text('Scale : ')
+					])),
+				A2(
+				$elm$html$Html$h2,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text(
+						$elm$core$Debug$toString(model.beat))
 					])),
 				$author$project$Main$viewScales(model),
 				A2(
