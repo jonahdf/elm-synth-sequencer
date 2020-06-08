@@ -4358,43 +4358,6 @@ function _Browser_load(url)
 
 
 
-var _Bitwise_and = F2(function(a, b)
-{
-	return a & b;
-});
-
-var _Bitwise_or = F2(function(a, b)
-{
-	return a | b;
-});
-
-var _Bitwise_xor = F2(function(a, b)
-{
-	return a ^ b;
-});
-
-function _Bitwise_complement(a)
-{
-	return ~a;
-};
-
-var _Bitwise_shiftLeftBy = F2(function(offset, a)
-{
-	return a << offset;
-});
-
-var _Bitwise_shiftRightBy = F2(function(offset, a)
-{
-	return a >> offset;
-});
-
-var _Bitwise_shiftRightZfBy = F2(function(offset, a)
-{
-	return a >>> offset;
-});
-
-
-
 function _Time_now(millisToPosix)
 {
 	return _Scheduler_binding(function(callback)
@@ -4438,6 +4401,43 @@ function _Time_getZoneName()
 		callback(_Scheduler_succeed(name));
 	});
 }
+
+
+
+var _Bitwise_and = F2(function(a, b)
+{
+	return a & b;
+});
+
+var _Bitwise_or = F2(function(a, b)
+{
+	return a | b;
+});
+
+var _Bitwise_xor = F2(function(a, b)
+{
+	return a ^ b;
+});
+
+function _Bitwise_complement(a)
+{
+	return ~a;
+};
+
+var _Bitwise_shiftLeftBy = F2(function(offset, a)
+{
+	return a << offset;
+});
+
+var _Bitwise_shiftRightBy = F2(function(offset, a)
+{
+	return a >> offset;
+});
+
+var _Bitwise_shiftRightZfBy = F2(function(offset, a)
+{
+	return a >>> offset;
+});
 var $elm$core$Basics$EQ = {$: 'EQ'};
 var $elm$core$Basics$LT = {$: 'LT'};
 var $elm$core$List$cons = _List_cons;
@@ -5518,19 +5518,56 @@ var $pd_andy$elm_web_audio$WebAudio$Program$element = function (_v0) {
 			view: view
 		});
 };
-var $author$project$Main$initialModel = _List_fromArray(
-	[
-		{key: 'c', midi: 60, triggered: false},
-		{key: 'd', midi: 62, triggered: false},
-		{key: 'e', midi: 64, triggered: false},
-		{key: 'f', midi: 65, triggered: false},
-		{key: 'g', midi: 67, triggered: false},
-		{key: 'a', midi: 69, triggered: false},
-		{key: 'b', midi: 71, triggered: false},
-		{key: 'c', midi: 72, triggered: false},
-		{key: 'd', midi: 74, triggered: false},
-		{key: 'e', midi: 75, triggered: false}
-	]);
+var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $author$project$Main$Scale = F2(
+	function (name, notes) {
+		return {name: name, notes: notes};
+	});
+var $author$project$Main$pentatonic = A2(
+	$author$project$Main$Scale,
+	'Pentatonic',
+	_List_fromArray(
+		[
+			_Utils_Tuple2('c', 60),
+			_Utils_Tuple2('d', 62),
+			_Utils_Tuple2('e', 64),
+			_Utils_Tuple2('g', 67),
+			_Utils_Tuple2('a', 69),
+			_Utils_Tuple2('c', 72),
+			_Utils_Tuple2('d', 74),
+			_Utils_Tuple2('e', 76),
+			_Utils_Tuple2('g', 79),
+			_Utils_Tuple2('a', 81)
+		]));
+var $author$project$Main$pianoKeys = function (notes) {
+	return A3(
+		$elm$core$List$map2,
+		F2(
+			function (note, k) {
+				return _Utils_update(
+					note,
+					{key: k});
+			}),
+		notes,
+		_List_fromArray(
+			['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';']));
+};
+var $author$project$Main$Note = F3(
+	function (key, midi, triggered) {
+		return {key: key, midi: midi, triggered: triggered};
+	});
+var $elm$core$Tuple$second = function (_v0) {
+	var y = _v0.b;
+	return y;
+};
+var $author$project$Main$scaleInit = function (scale) {
+	return A2(
+		$elm$core$List$map,
+		function (note) {
+			return A3($author$project$Main$Note, note.a, note.b, false);
+		},
+		scale.notes);
+};
 var $elm$core$Array$fromListHelp = F3(
 	function (list, nodeList, nodeListSize) {
 		fromListHelp:
@@ -5575,191 +5612,19 @@ var $elm$core$Array$repeat = F2(
 				return e;
 			});
 	});
-var $author$project$Main$initialTrackHelp = $elm$core$Array$fromList(
-	A2(
-		$elm$core$List$map,
-		function (note) {
-			return {
-				beats: A2($elm$core$Array$repeat, 8, false),
-				key: note.key,
-				midi: note.midi
-			};
-		},
-		$author$project$Main$initialModel));
-var $author$project$Main$s = _List_Nil;
-var $author$project$Main$Track = F3(
-	function (key, midi, beats) {
-		return {beats: beats, key: key, midi: midi};
-	});
-var $elm$core$Bitwise$and = _Bitwise_and;
-var $elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
-var $elm$core$Array$bitMask = 4294967295 >>> (32 - $elm$core$Array$shiftStep);
-var $elm$core$Basics$ge = _Utils_ge;
-var $elm$core$Elm$JsArray$unsafeGet = _JsArray_unsafeGet;
-var $elm$core$Array$getHelp = F3(
-	function (shift, index, tree) {
-		getHelp:
-		while (true) {
-			var pos = $elm$core$Array$bitMask & (index >>> shift);
-			var _v0 = A2($elm$core$Elm$JsArray$unsafeGet, pos, tree);
-			if (_v0.$ === 'SubTree') {
-				var subTree = _v0.a;
-				var $temp$shift = shift - $elm$core$Array$shiftStep,
-					$temp$index = index,
-					$temp$tree = subTree;
-				shift = $temp$shift;
-				index = $temp$index;
-				tree = $temp$tree;
-				continue getHelp;
-			} else {
-				var values = _v0.a;
-				return A2($elm$core$Elm$JsArray$unsafeGet, $elm$core$Array$bitMask & index, values);
-			}
-		}
-	});
-var $elm$core$Bitwise$shiftLeftBy = _Bitwise_shiftLeftBy;
-var $elm$core$Array$tailIndex = function (len) {
-	return (len >>> 5) << 5;
-};
-var $elm$core$Array$get = F2(
-	function (index, _v0) {
-		var len = _v0.a;
-		var startShift = _v0.b;
-		var tree = _v0.c;
-		var tail = _v0.d;
-		return ((index < 0) || (_Utils_cmp(index, len) > -1)) ? $elm$core$Maybe$Nothing : ((_Utils_cmp(
-			index,
-			$elm$core$Array$tailIndex(len)) > -1) ? $elm$core$Maybe$Just(
-			A2($elm$core$Elm$JsArray$unsafeGet, $elm$core$Array$bitMask & index, tail)) : $elm$core$Maybe$Just(
-			A3($elm$core$Array$getHelp, startShift, index, tree)));
-	});
-var $elm$core$Elm$JsArray$map = _JsArray_map;
-var $elm$core$Array$map = F2(
-	function (func, _v0) {
-		var len = _v0.a;
-		var startShift = _v0.b;
-		var tree = _v0.c;
-		var tail = _v0.d;
-		var helper = function (node) {
-			if (node.$ === 'SubTree') {
-				var subTree = node.a;
-				return $elm$core$Array$SubTree(
-					A2($elm$core$Elm$JsArray$map, helper, subTree));
-			} else {
-				var values = node.a;
-				return $elm$core$Array$Leaf(
-					A2($elm$core$Elm$JsArray$map, func, values));
-			}
-		};
-		return A4(
-			$elm$core$Array$Array_elm_builtin,
-			len,
-			startShift,
-			A2($elm$core$Elm$JsArray$map, helper, tree),
-			A2($elm$core$Elm$JsArray$map, func, tail));
-	});
-var $elm$core$Basics$not = _Basics_not;
-var $elm$core$Elm$JsArray$unsafeSet = _JsArray_unsafeSet;
-var $elm$core$Array$setHelp = F4(
-	function (shift, index, value, tree) {
-		var pos = $elm$core$Array$bitMask & (index >>> shift);
-		var _v0 = A2($elm$core$Elm$JsArray$unsafeGet, pos, tree);
-		if (_v0.$ === 'SubTree') {
-			var subTree = _v0.a;
-			var newSub = A4($elm$core$Array$setHelp, shift - $elm$core$Array$shiftStep, index, value, subTree);
-			return A3(
-				$elm$core$Elm$JsArray$unsafeSet,
-				pos,
-				$elm$core$Array$SubTree(newSub),
-				tree);
-		} else {
-			var values = _v0.a;
-			var newLeaf = A3($elm$core$Elm$JsArray$unsafeSet, $elm$core$Array$bitMask & index, value, values);
-			return A3(
-				$elm$core$Elm$JsArray$unsafeSet,
-				pos,
-				$elm$core$Array$Leaf(newLeaf),
-				tree);
-		}
-	});
-var $elm$core$Array$set = F3(
-	function (index, value, array) {
-		var len = array.a;
-		var startShift = array.b;
-		var tree = array.c;
-		var tail = array.d;
-		return ((index < 0) || (_Utils_cmp(index, len) > -1)) ? array : ((_Utils_cmp(
-			index,
-			$elm$core$Array$tailIndex(len)) > -1) ? A4(
-			$elm$core$Array$Array_elm_builtin,
-			len,
-			startShift,
-			tree,
-			A3($elm$core$Elm$JsArray$unsafeSet, $elm$core$Array$bitMask & index, value, tail)) : A4(
-			$elm$core$Array$Array_elm_builtin,
-			len,
-			startShift,
-			A4($elm$core$Array$setHelp, startShift, index, value, tree),
-			tail));
-	});
-var $author$project$Main$trackToggle = F3(
-	function (tracks, midi, beat) {
-		return A2(
-			$elm$core$Array$map,
-			function (track) {
-				if (_Utils_eq(track.midi, midi)) {
-					var _v0 = A2($elm$core$Array$get, beat, track.beats);
-					if (_v0.$ === 'Just') {
-						var bool = _v0.a;
-						return A3(
-							$author$project$Main$Track,
-							track.key,
-							track.midi,
-							A3($elm$core$Array$set, beat, !bool, track.beats));
-					} else {
-						return A3($author$project$Main$Track, track.key, track.midi, track.beats);
-					}
-				} else {
-					return A3($author$project$Main$Track, track.key, track.midi, track.beats);
-				}
-			},
-			tracks);
-	});
-var $author$project$Main$trackSetList = F2(
-	function (tracks, lst) {
-		trackSetList:
-		while (true) {
-			if (!lst.b) {
-				return tracks;
-			} else {
-				var _v1 = lst.a;
-				var midi = _v1.a;
-				var beat = _v1.b;
-				var tl = lst.b;
-				var $temp$tracks = A3($author$project$Main$trackToggle, tracks, midi, beat),
-					$temp$lst = tl;
-				tracks = $temp$tracks;
-				lst = $temp$lst;
-				continue trackSetList;
-			}
-		}
-	});
-var $author$project$Main$initialTrack = A2($author$project$Main$trackSetList, $author$project$Main$initialTrackHelp, $author$project$Main$s);
-var $author$project$Main$keys = _List_fromArray(
-	['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';']);
-var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
-var $author$project$Main$updateKeys = F2(
-	function (notes, keyList) {
-		return A3(
-			$elm$core$List$map2,
-			F2(
-				function (note, k) {
-					return _Utils_update(
-						note,
-						{key: k});
-				}),
-			notes,
-			keyList);
+var $author$project$Main$trackInit = F2(
+	function (scale, beats) {
+		return $elm$core$Array$fromList(
+			A2(
+				$elm$core$List$map,
+				function (note) {
+					return {
+						beats: A2($elm$core$Array$repeat, beats, false),
+						key: note.a,
+						midi: note.b
+					};
+				},
+				scale.notes));
 	});
 var $author$project$Main$init = function (co) {
 	return _Utils_Tuple2(
@@ -5769,9 +5634,11 @@ var $author$project$Main$init = function (co) {
 			context: co,
 			go: true,
 			len: 8,
-			notes: $author$project$Main$initialModel,
-			piano: A2($author$project$Main$updateKeys, $author$project$Main$initialModel, $author$project$Main$keys),
-			tracks: $author$project$Main$initialTrack,
+			notes: $author$project$Main$scaleInit($author$project$Main$pentatonic),
+			piano: $author$project$Main$pianoKeys(
+				$author$project$Main$scaleInit($author$project$Main$pentatonic)),
+			scale: $author$project$Main$pentatonic,
+			tracks: A2($author$project$Main$trackInit, $author$project$Main$pentatonic, 8),
 			transpose: 0
 		},
 		$elm$core$Platform$Cmd$none);
@@ -6478,6 +6345,31 @@ var $author$project$Main$subscriptions = function (model) {
 				A2($elm$time$Time$every, 60000 / model.bpm, $author$project$Main$NextStep)
 			]));
 };
+var $elm$core$Elm$JsArray$map = _JsArray_map;
+var $elm$core$Array$map = F2(
+	function (func, _v0) {
+		var len = _v0.a;
+		var startShift = _v0.b;
+		var tree = _v0.c;
+		var tail = _v0.d;
+		var helper = function (node) {
+			if (node.$ === 'SubTree') {
+				var subTree = node.a;
+				return $elm$core$Array$SubTree(
+					A2($elm$core$Elm$JsArray$map, helper, subTree));
+			} else {
+				var values = node.a;
+				return $elm$core$Array$Leaf(
+					A2($elm$core$Elm$JsArray$map, func, values));
+			}
+		};
+		return A4(
+			$elm$core$Array$Array_elm_builtin,
+			len,
+			startShift,
+			A2($elm$core$Elm$JsArray$map, helper, tree),
+			A2($elm$core$Elm$JsArray$map, func, tail));
+	});
 var $author$project$Main$initTracks = function (model) {
 	return A2(
 		$elm$core$Array$map,
@@ -6578,6 +6470,200 @@ var $author$project$Main$updateReset = function (model) {
 		model,
 		{bpm: 200, len: 8, transpose: 0});
 };
+var $author$project$Main$diatonic = A2(
+	$author$project$Main$Scale,
+	'Diatonic',
+	_List_fromArray(
+		[
+			_Utils_Tuple2('c', 60),
+			_Utils_Tuple2('d', 62),
+			_Utils_Tuple2('e', 64),
+			_Utils_Tuple2('f', 65),
+			_Utils_Tuple2('g', 67),
+			_Utils_Tuple2('a', 69),
+			_Utils_Tuple2('b', 71),
+			_Utils_Tuple2('c', 72),
+			_Utils_Tuple2('d', 74),
+			_Utils_Tuple2('e', 76)
+		]));
+var $author$project$Main$scales = $elm$core$Dict$fromList(
+	_List_fromArray(
+		[
+			_Utils_Tuple2(
+			'Diatonic',
+			A2(
+				$author$project$Main$Scale,
+				'Diatonic',
+				_List_fromArray(
+					[
+						_Utils_Tuple2('c', 60),
+						_Utils_Tuple2('d', 62),
+						_Utils_Tuple2('e', 64),
+						_Utils_Tuple2('f', 65),
+						_Utils_Tuple2('g', 67),
+						_Utils_Tuple2('a', 69),
+						_Utils_Tuple2('b', 71),
+						_Utils_Tuple2('c', 72),
+						_Utils_Tuple2('d', 74),
+						_Utils_Tuple2('e', 76)
+					]))),
+			_Utils_Tuple2(
+			'Pentatonic',
+			A2(
+				$author$project$Main$Scale,
+				'Pentatonic',
+				_List_fromArray(
+					[
+						_Utils_Tuple2('c', 60),
+						_Utils_Tuple2('d', 62),
+						_Utils_Tuple2('e', 64),
+						_Utils_Tuple2('g', 67),
+						_Utils_Tuple2('a', 69),
+						_Utils_Tuple2('c', 72),
+						_Utils_Tuple2('d', 74),
+						_Utils_Tuple2('e', 76),
+						_Utils_Tuple2('g', 79),
+						_Utils_Tuple2('a', 81)
+					])))
+		]));
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var $author$project$Main$updateScale = F2(
+	function (model, string) {
+		var newScale = A2(
+			$elm$core$Maybe$withDefault,
+			$author$project$Main$diatonic,
+			A2($elm$core$Dict$get, string, $author$project$Main$scales));
+		return _Utils_update(
+			model,
+			{
+				notes: $author$project$Main$scaleInit(newScale),
+				piano: $author$project$Main$pianoKeys(
+					$author$project$Main$scaleInit(newScale)),
+				scale: newScale,
+				tracks: A2($author$project$Main$trackInit, newScale, model.len)
+			});
+	});
+var $author$project$Main$Track = F3(
+	function (key, midi, beats) {
+		return {beats: beats, key: key, midi: midi};
+	});
+var $elm$core$Bitwise$and = _Bitwise_and;
+var $elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
+var $elm$core$Array$bitMask = 4294967295 >>> (32 - $elm$core$Array$shiftStep);
+var $elm$core$Basics$ge = _Utils_ge;
+var $elm$core$Elm$JsArray$unsafeGet = _JsArray_unsafeGet;
+var $elm$core$Array$getHelp = F3(
+	function (shift, index, tree) {
+		getHelp:
+		while (true) {
+			var pos = $elm$core$Array$bitMask & (index >>> shift);
+			var _v0 = A2($elm$core$Elm$JsArray$unsafeGet, pos, tree);
+			if (_v0.$ === 'SubTree') {
+				var subTree = _v0.a;
+				var $temp$shift = shift - $elm$core$Array$shiftStep,
+					$temp$index = index,
+					$temp$tree = subTree;
+				shift = $temp$shift;
+				index = $temp$index;
+				tree = $temp$tree;
+				continue getHelp;
+			} else {
+				var values = _v0.a;
+				return A2($elm$core$Elm$JsArray$unsafeGet, $elm$core$Array$bitMask & index, values);
+			}
+		}
+	});
+var $elm$core$Bitwise$shiftLeftBy = _Bitwise_shiftLeftBy;
+var $elm$core$Array$tailIndex = function (len) {
+	return (len >>> 5) << 5;
+};
+var $elm$core$Array$get = F2(
+	function (index, _v0) {
+		var len = _v0.a;
+		var startShift = _v0.b;
+		var tree = _v0.c;
+		var tail = _v0.d;
+		return ((index < 0) || (_Utils_cmp(index, len) > -1)) ? $elm$core$Maybe$Nothing : ((_Utils_cmp(
+			index,
+			$elm$core$Array$tailIndex(len)) > -1) ? $elm$core$Maybe$Just(
+			A2($elm$core$Elm$JsArray$unsafeGet, $elm$core$Array$bitMask & index, tail)) : $elm$core$Maybe$Just(
+			A3($elm$core$Array$getHelp, startShift, index, tree)));
+	});
+var $elm$core$Basics$not = _Basics_not;
+var $elm$core$Elm$JsArray$unsafeSet = _JsArray_unsafeSet;
+var $elm$core$Array$setHelp = F4(
+	function (shift, index, value, tree) {
+		var pos = $elm$core$Array$bitMask & (index >>> shift);
+		var _v0 = A2($elm$core$Elm$JsArray$unsafeGet, pos, tree);
+		if (_v0.$ === 'SubTree') {
+			var subTree = _v0.a;
+			var newSub = A4($elm$core$Array$setHelp, shift - $elm$core$Array$shiftStep, index, value, subTree);
+			return A3(
+				$elm$core$Elm$JsArray$unsafeSet,
+				pos,
+				$elm$core$Array$SubTree(newSub),
+				tree);
+		} else {
+			var values = _v0.a;
+			var newLeaf = A3($elm$core$Elm$JsArray$unsafeSet, $elm$core$Array$bitMask & index, value, values);
+			return A3(
+				$elm$core$Elm$JsArray$unsafeSet,
+				pos,
+				$elm$core$Array$Leaf(newLeaf),
+				tree);
+		}
+	});
+var $elm$core$Array$set = F3(
+	function (index, value, array) {
+		var len = array.a;
+		var startShift = array.b;
+		var tree = array.c;
+		var tail = array.d;
+		return ((index < 0) || (_Utils_cmp(index, len) > -1)) ? array : ((_Utils_cmp(
+			index,
+			$elm$core$Array$tailIndex(len)) > -1) ? A4(
+			$elm$core$Array$Array_elm_builtin,
+			len,
+			startShift,
+			tree,
+			A3($elm$core$Elm$JsArray$unsafeSet, $elm$core$Array$bitMask & index, value, tail)) : A4(
+			$elm$core$Array$Array_elm_builtin,
+			len,
+			startShift,
+			A4($elm$core$Array$setHelp, startShift, index, value, tree),
+			tail));
+	});
+var $author$project$Main$trackToggle = F3(
+	function (tracks, midi, beat) {
+		return A2(
+			$elm$core$Array$map,
+			function (track) {
+				if (_Utils_eq(track.midi, midi)) {
+					var _v0 = A2($elm$core$Array$get, beat, track.beats);
+					if (_v0.$ === 'Just') {
+						var bool = _v0.a;
+						return A3(
+							$author$project$Main$Track,
+							track.key,
+							track.midi,
+							A3($elm$core$Array$set, beat, !bool, track.beats));
+					} else {
+						return A3($author$project$Main$Track, track.key, track.midi, track.beats);
+					}
+				} else {
+					return A3($author$project$Main$Track, track.key, track.midi, track.beats);
+				}
+			},
+			tracks);
+	});
 var $author$project$Main$updateToggle = F3(
 	function (model, midi, beat) {
 		return _Utils_update(
@@ -6585,10 +6671,6 @@ var $author$project$Main$updateToggle = F3(
 			{
 				tracks: A3($author$project$Main$trackToggle, model.tracks, midi, beat)
 			});
-	});
-var $author$project$Main$Note = F3(
-	function (key, midi, triggered) {
-		return {key: key, midi: midi, triggered: triggered};
 	});
 var $author$project$Main$updateTrack = function (model) {
 	return _Utils_update(
@@ -6610,15 +6692,6 @@ var $author$project$Main$updateTrack = function (model) {
 					model.tracks))
 		});
 };
-var $elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
-	});
 var $author$project$Main$updateTranspose = F2(
 	function (model, t) {
 		return _Utils_update(
@@ -6678,10 +6751,15 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					A2($author$project$Main$updateBpm, model, string),
 					$elm$core$Platform$Cmd$none);
-			default:
+			case 'ChangeBeats':
 				var string = msg.a;
 				return _Utils_Tuple2(
 					A2($author$project$Main$updateBeats, model, string),
+					$elm$core$Platform$Cmd$none);
+			default:
+				var string = msg.a;
+				return _Utils_Tuple2(
+					A2($author$project$Main$updateScale, model, string),
 					$elm$core$Platform$Cmd$none);
 		}
 	});
@@ -6710,13 +6788,12 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
 var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$html$Html$h1 = _VirtualDom_node('h1');
+var $elm$html$Html$h2 = _VirtualDom_node('h2');
 var $elm$html$Html$h3 = _VirtualDom_node('h3');
 var $elm$html$Html$hr = _VirtualDom_node('hr');
 var $elm$html$Html$input = _VirtualDom_node('input');
 var $elm$html$Html$main_ = _VirtualDom_node('main');
 var $elm$html$Html$Attributes$max = $elm$html$Html$Attributes$stringProperty('max');
-var $author$project$Main$midis = _List_fromArray(
-	[60, 62, 64, 65, 67, 69, 71, 72, 74, 75]);
 var $elm$html$Html$Attributes$min = $elm$html$Html$Attributes$stringProperty('min');
 var $author$project$Main$noteCSS = function (active) {
 	return active ? 'bg-indigo-500 text-white font-bold py-2 px-4 mr-4 rounded' : 'bg-indigo-100 text-black font-bold py-2 px-4 mr-4 rounded';
@@ -6811,6 +6888,43 @@ var $author$project$Main$viewMeter = F2(
 					$elm$core$Debug$toString(beat))
 				]));
 	});
+var $author$project$Main$ChangeScale = function (a) {
+	return {$: 'ChangeScale', a: a};
+};
+var $elm$html$Html$option = _VirtualDom_node('option');
+var $elm$html$Html$select = _VirtualDom_node('select');
+var $author$project$Main$viewScales = function (model) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('mx-2')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$select,
+				_List_fromArray(
+					[
+						$elm$html$Html$Events$onInput($author$project$Main$ChangeScale)
+					]),
+				A2(
+					$elm$core$List$map,
+					function (name) {
+						return A2(
+							$elm$html$Html$option,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$value(name)
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text(name)
+								]));
+					},
+					$elm$core$Dict$keys($author$project$Main$scales)))
+			]));
+};
 var $author$project$Main$ToggleNote = F2(
 	function (a, b) {
 		return {$: 'ToggleNote', a: a, b: b};
@@ -6842,8 +6956,8 @@ var $author$project$Main$midiToIndex = F2(
 						return _Debug_todo(
 							'Main',
 							{
-								start: {line: 204, column: 21},
-								end: {line: 204, column: 31}
+								start: {line: 221, column: 21},
+								end: {line: 221, column: 31}
 							})('not in model');
 					} else {
 						var h = lst.a;
@@ -7056,6 +7170,14 @@ var $author$project$Main$view = function (model) {
 						$elm$html$Html$text(
 						'Beats: ' + $elm$core$Debug$toString(model.len))
 					])),
+				A2(
+				$elm$html$Html$h2,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Scale : ')
+					])),
+				$author$project$Main$viewScales(model),
 				A2($elm$html$Html$hr, _List_Nil, _List_Nil),
 				A2(
 				$elm$html$Html$h3,
@@ -7132,10 +7254,10 @@ var $author$project$Main$view = function (model) {
 					]),
 				A2(
 					$elm$core$List$map,
-					function (midi) {
-						return A2($author$project$Main$viewTrack, model, midi);
+					function (note) {
+						return A2($author$project$Main$viewTrack, model, note.b);
 					},
-					$author$project$Main$midis))
+					model.scale.notes))
 			]));
 };
 var $author$project$Main$main = $pd_andy$elm_web_audio$WebAudio$Program$element(

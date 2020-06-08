@@ -7,6 +7,7 @@ port module Main exposing (..)
 import Array as A
 import Browser
 import Browser.Events
+import Dict exposing (Dict)
 import Html
     exposing
         ( Attribute
@@ -89,53 +90,73 @@ type alias Model =
     , go : Bool
     , transpose : Float
     , bpm : Float
+    , scale : Scale
     }
 
 
-
---
-
-
-initialModel : List Note
-initialModel =
-    [ { key = "c", midi = 60, triggered = False }
-    , { key = "d", midi = 62, triggered = False }
-    , { key = "e", midi = 64, triggered = False }
-    , { key = "f", midi = 65, triggered = False }
-    , { key = "g", midi = 67, triggered = False }
-    , { key = "a", midi = 69, triggered = False }
-    , { key = "b", midi = 71, triggered = False }
-    , { key = "c", midi = 72, triggered = False }
-    , { key = "d", midi = 74, triggered = False }
-    , { key = "e", midi = 75, triggered = False }
-    ]
-
-
-midis =
-    [ 60, 62, 64, 65, 67, 69, 71, 72, 74, 75 ]
-
-
-keys =
-    [ "a", "s", "d", "f", "g", "h", "j", "k", "l", ";" ]
-
-
-updateKeys : List Note -> List String -> List Note
-updateKeys notes keyList =
-    List.map2 (\note k -> { note | key = k }) notes keyList
+scales : Dict String Scale
+scales =
+    Dict.fromList
+        [ ( "Diatonic"
+          , Scale "Diatonic"
+                [ ( "c", 60 ), ( "d", 62 ), ( "e", 64 ), ( "f", 65 ), ( "g", 67 ), ( "a", 69 ), ( "b", 71 ), ( "c", 72 ), ( "d", 74 ), ( "e", 76 ) ]
+          )
+        , ( "Pentatonic"
+          , Scale "Pentatonic"
+                [ ( "c", 60 )
+                , ( "d", 62 )
+                , ( "e", 64 )
+                , ( "g", 67 )
+                , ( "a"
+                  , 69
+                  )
+                , ( "c", 72 )
+                , ( "d", 74 )
+                , ( "e", 76 )
+                , ( "g", 79 )
+                , ( "a", 81 )
+                ]
+          )
+        ]
 
 
-initialTrackHelp : A.Array Track
-initialTrackHelp =
-    A.fromList
-        (List.map
-            (\note ->
-                { key = note.key
-                , midi = note.midi
-                , beats = A.repeat 8 False
-                }
-            )
-            initialModel
-        )
+pentatonic =
+    Scale "Pentatonic"
+        [ ( "c", 60 )
+        , ( "d", 62 )
+        , ( "e", 64 )
+        , ( "g", 67 )
+        , ( "a", 69 )
+        , ( "c", 72 )
+        , ( "d", 74 )
+        , ( "e", 76 )
+        , ( "g", 79 )
+        , ( "a", 81 )
+        ]
+
+
+diatonic =
+    Scale "Diatonic"
+        [ ( "c", 60 ), ( "d", 62 ), ( "e", 64 ), ( "f", 65 ), ( "g", 67 ), ( "a", 69 ), ( "b", 71 ), ( "c", 72 ), ( "d", 74 ), ( "e", 76 ) ]
+
+
+type alias Scale =
+    { name : String
+    , notes : List ( String, Float )
+    }
+
+
+scaleInit : Scale -> List Note
+scaleInit scale =
+    List.map (\note -> Note (Tuple.first note) (Tuple.second note) False)
+        scale.notes
+
+
+pianoKeys : List Note -> List Note
+pianoKeys notes =
+    List.map2 (\note k -> { note | key = k })
+        notes
+        [ "a", "s", "d", "f", "g", "h", "j", "k", "l", ";" ]
 
 
 trackToggle : A.Array Track -> Float -> Int -> A.Array Track
@@ -186,10 +207,6 @@ getValIndex model index beat =
             False
 
 
-
---
-
-
 getVal : Model -> Float -> Int -> Bool
 getVal model midi beat =
     getValIndex model (midiToIndex model midi) beat
@@ -213,42 +230,34 @@ midiToIndex model midi =
     check 0 (A.toList model.tracks)
 
 
-initialTrack : A.Array Track
-initialTrack =
-    trackSetList initialTrackHelp s
+trackInit : Scale -> Int -> A.Array Track
+trackInit scale beats =
+    A.fromList
+        (List.map
+            (\note ->
+                { key = Tuple.first note
+                , midi = Tuple.second note
+                , beats = A.repeat beats False
+                }
+            )
+            scale.notes
+        )
 
 
 init co =
-    ( { notes = initialModel
-      , piano = updateKeys initialModel keys
-      , tracks = initialTrack
+    ( { notes = scaleInit pentatonic
+      , piano = pianoKeys (scaleInit pentatonic)
+      , tracks = trackInit pentatonic 8
       , context = co
       , beat = 0
       , len = 8
       , go = True
       , transpose = 0
       , bpm = 200
+      , scale = pentatonic
       }
     , Cmd.none
     )
-
-
-
-{- s =
-   [ ( 60, 2 )
-   , ( 62, 2 )
-   , ( 64, 4 )
-   , ( 65, 3 )
-   , ( 67, 5 )
-   , ( 69
-     , 8
-     )
-   ]
--}
-
-
-s =
-    []
 
 
 
@@ -269,6 +278,7 @@ type Msg
     | Reset
     | Bpm String
     | ChangeBeats String
+    | ChangeScale String
 
 
 
@@ -413,6 +423,19 @@ updateReset model =
     }
 
 
+updateScale model string =
+    let
+        newScale =
+            Maybe.withDefault diatonic (Dict.get string scales)
+    in
+    { model
+        | notes = scaleInit newScale
+        , piano = pianoKeys (scaleInit newScale)
+        , scale = newScale
+        , tracks = trackInit newScale model.len
+    }
+
+
 
 --
 
@@ -464,6 +487,9 @@ update msg model =
 
         ChangeBeats string ->
             ( updateBeats model string, Cmd.none )
+
+        ChangeScale string ->
+            ( updateScale model string, Cmd.none )
 
 
 
@@ -603,6 +629,24 @@ viewMeter model beat =
         [ text (Debug.toString beat) ]
 
 
+viewScales : Model -> Html Msg
+viewScales model =
+    div
+        [ class "mx-2" ]
+        [ Html.select
+            [ onInput ChangeScale ]
+            (List.map
+                (\name ->
+                    Html.option [ H.value name ]
+                        [ text
+                            name
+                        ]
+                )
+                (Dict.keys scales)
+            )
+        ]
+
+
 view : Model -> Html Msg
 view model =
     main_ [ class "m-10" ]
@@ -674,6 +718,8 @@ view model =
                 []
             , text ("Beats: " ++ Debug.toString model.len)
             ]
+        , Html.h2 [] [ text "Scale : " ]
+        , viewScales model
         , Html.hr [] []
         , Html.h3 [ style "text-align" "center" ] [ Html.u [] [ text "Sequencer\n        Notes" ] ]
         , div [ class "flex", style "padding" "10px" ] <|
@@ -701,8 +747,8 @@ view model =
             , style "justify-content" "left"
             ]
             (List.map
-                (\midi -> viewTrack model midi)
-                midis
+                (\note -> viewTrack model (Tuple.second note))
+                model.scale.notes
             )
         ]
 
