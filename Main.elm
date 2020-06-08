@@ -120,7 +120,7 @@ initialTrackHelp =
             (\note ->
                 { key = note.key
                 , midi = note.midi
-                , beats = A.repeat 4 False
+                , beats = A.repeat 8 False
                 }
             )
             initialModel
@@ -212,10 +212,10 @@ init co =
       , tracks = initialTrack
       , context = co
       , beat = 0
-      , len = 4
+      , len = 8
       , go = True
       , transpose = 0
-      , bpm = 120
+      , bpm = 200
       }
     , Cmd.none
     )
@@ -479,7 +479,7 @@ voice transpose note =
         [ WebAudio.gain
             [ Prop.gain <|
                 if note.triggered then
-                    0.2
+                    0.3
 
                 else
                     0
@@ -544,23 +544,27 @@ viewSquare model midi beat =
                 )
             )
         , style "border" "1px solid black"
+        , style "padding" "20px"
         ]
-        [ text (Debug.toString (beat + 1)) ]
+        --[ text (Debug.toString (beat + 1)) ]
+        []
 
 
 viewTrack : Model -> Float -> Html Msg
 viewTrack model midi =
     div [ style "padding-bottom" "10px" ]
-        (text
-            (Debug.toString midi
-                ++ " "
+        {- text
+           (Debug.toString midi
+               ++ " "
+           )
+           ::
+        -}
+        (List.map
+            (\x -> viewSquare model midi x)
+            (List.range
+                0
+                (model.len - 1)
             )
-            :: List.map
-                (\x -> viewSquare model midi x)
-                (List.range
-                    0
-                    (model.len - 1)
-                )
         )
 
 

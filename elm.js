@@ -5036,7 +5036,7 @@ var $author$project$Main$voice = F2(
 					_List_fromArray(
 						[
 							$pd_andy$elm_web_audio$WebAudio$Property$gain(
-							note.triggered ? 0.2 : 0)
+							note.triggered ? 0.3 : 0)
 						]),
 					_List_fromArray(
 						[$pd_andy$elm_web_audio$WebAudio$dac]))
@@ -5552,7 +5552,7 @@ var $author$project$Main$initialTrackHelp = $elm$core$Array$fromList(
 		$elm$core$List$map,
 		function (note) {
 			return {
-				beats: A2($elm$core$Array$repeat, 4, false),
+				beats: A2($elm$core$Array$repeat, 8, false),
 				key: note.key,
 				midi: note.midi
 			};
@@ -5720,7 +5720,7 @@ var $author$project$Main$initialTrack = A2($author$project$Main$trackSetList, $a
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$init = function (co) {
 	return _Utils_Tuple2(
-		{beat: 0, bpm: 120, context: co, go: true, len: 4, notes: $author$project$Main$initialModel, tracks: $author$project$Main$initialTrack, transpose: 0},
+		{beat: 0, bpm: 200, context: co, go: true, len: 8, notes: $author$project$Main$initialModel, tracks: $author$project$Main$initialTrack, transpose: 0},
 		$elm$core$Platform$Cmd$none);
 };
 var $author$project$Main$NextStep = function (a) {
@@ -6494,13 +6494,10 @@ var $author$project$Main$viewSquare = F3(
 					$elm$html$Html$Attributes$class(
 					$author$project$Main$noteCSS(
 						A3($author$project$Main$getVal, model, midi, beat))),
-					A2($elm$html$Html$Attributes$style, 'border', '1px solid black')
+					A2($elm$html$Html$Attributes$style, 'border', '1px solid black'),
+					A2($elm$html$Html$Attributes$style, 'padding', '20px')
 				]),
-			_List_fromArray(
-				[
-					$elm$html$Html$text(
-					$elm$core$Debug$toString(beat + 1))
-				]));
+			_List_Nil);
 	});
 var $author$project$Main$viewTrack = F2(
 	function (model, midi) {
@@ -6511,15 +6508,11 @@ var $author$project$Main$viewTrack = F2(
 					A2($elm$html$Html$Attributes$style, 'padding-bottom', '10px')
 				]),
 			A2(
-				$elm$core$List$cons,
-				$elm$html$Html$text(
-					$elm$core$Debug$toString(midi) + ' '),
-				A2(
-					$elm$core$List$map,
-					function (x) {
-						return A3($author$project$Main$viewSquare, model, midi, x);
-					},
-					A2($elm$core$List$range, 0, model.len - 1))));
+				$elm$core$List$map,
+				function (x) {
+					return A3($author$project$Main$viewSquare, model, midi, x);
+				},
+				A2($elm$core$List$range, 0, model.len - 1)));
 	});
 var $author$project$Main$view = function (model) {
 	return A2(
