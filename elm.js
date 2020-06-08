@@ -6149,20 +6149,23 @@ var $author$project$Main$subscriptions = function (model) {
 				A2($elm$time$Time$every, 60000 / model.bpm, $author$project$Main$NextStep)
 			]));
 };
+var $author$project$Main$initTracks = function (model) {
+	return A2(
+		$elm$core$Array$map,
+		function (track) {
+			return _Utils_update(
+				track,
+				{
+					beats: A2($elm$core$Array$repeat, model.len + 1, false)
+				});
+		},
+		model.tracks);
+};
 var $author$project$Main$clear = function (model) {
 	return _Utils_update(
 		model,
 		{
-			tracks: A2(
-				$elm$core$Array$map,
-				function (track) {
-					return _Utils_update(
-						track,
-						{
-							beats: A2($elm$core$Array$repeat, model.len, false)
-						});
-				},
-				model.tracks)
+			tracks: $author$project$Main$initTracks(model)
 		});
 };
 var $elm$core$Tuple$pair = F2(
@@ -6187,6 +6190,23 @@ var $author$project$Main$transposeUp = function (model) {
 		model,
 		{transpose: model.transpose + 0.5});
 };
+var $author$project$Main$updateBeats = F2(
+	function (model, string) {
+		return _Utils_update(
+			model,
+			{
+				len: function () {
+					var _v0 = $elm$core$String$toInt(string);
+					if (_v0.$ === 'Just') {
+						var i = _v0.a;
+						return i;
+					} else {
+						return model.len;
+					}
+				}(),
+				tracks: $author$project$Main$initTracks(model)
+			});
+	});
 var $elm$core$String$toFloat = _String_toFloat;
 var $author$project$Main$updateBpm = F2(
 	function (model, string) {
@@ -6220,7 +6240,7 @@ var $author$project$Main$updateTrack = function (model) {
 	return _Utils_update(
 		model,
 		{
-			beat: _Utils_eq(model.beat, model.len) ? 0 : (model.beat + 1),
+			beat: (_Utils_cmp(model.beat, model.len) > -1) ? 0 : (model.beat + 1),
 			notes: $elm$core$Array$toList(
 				A2(
 					$elm$core$Array$map,
@@ -6268,10 +6288,15 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					$author$project$Main$clear(model),
 					$elm$core$Platform$Cmd$none);
-			default:
+			case 'Bpm':
 				var string = msg.a;
 				return _Utils_Tuple2(
 					A2($author$project$Main$updateBpm, model, string),
+					$elm$core$Platform$Cmd$none);
+			default:
+				var string = msg.a;
+				return _Utils_Tuple2(
+					A2($author$project$Main$updateBeats, model, string),
 					$elm$core$Platform$Cmd$none);
 		}
 	});
@@ -6279,6 +6304,9 @@ var $author$project$Main$updateAudio = _Platform_outgoingPort('updateAudio', $el
 var $elm$json$Json$Decode$value = _Json_decodeValue;
 var $author$project$Main$Bpm = function (a) {
 	return {$: 'Bpm', a: a};
+};
+var $author$project$Main$ChangeBeats = function (a) {
+	return {$: 'ChangeBeats', a: a};
 };
 var $author$project$Main$Clear = {$: 'Clear'};
 var $author$project$Main$PauseToggle = {$: 'PauseToggle'};
@@ -6301,25 +6329,6 @@ var $elm$html$Html$Attributes$max = $elm$html$Html$Attributes$stringProperty('ma
 var $author$project$Main$midis = _List_fromArray(
 	[60, 62, 64, 65, 67, 69, 71, 72, 74]);
 var $elm$html$Html$Attributes$min = $elm$html$Html$Attributes$stringProperty('min');
-var $author$project$Main$noteCSS = function (active) {
-	return active ? 'bg-indigo-500 text-white font-bold py-2 px-4 mr-4 rounded' : 'bg-indigo-100 text-black font-bold py-2 px-4 mr-4 rounded';
-};
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $author$project$Main$noteView = function (note) {
-	return A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				$elm$html$Html$Attributes$class(
-				$author$project$Main$noteCSS(note.triggered)),
-				$elm$html$Html$Attributes$class('flex-1 mx-2 text-center')
-			]),
-		_List_fromArray(
-			[
-				$elm$html$Html$text(note.key)
-			]));
-};
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -6372,10 +6381,11 @@ var $elm$html$Html$Events$onInput = function (tagger) {
 };
 var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $elm$core$Debug$toString = _Debug_toString;
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
-var $elm$html$Html$p = _VirtualDom_node('p');
 var $author$project$Main$ToggleNote = F2(
 	function (a, b) {
 		return {$: 'ToggleNote', a: a, b: b};
@@ -6438,6 +6448,9 @@ var $author$project$Main$getVal = F3(
 			A2($author$project$Main$midiToIndex, model, midi),
 			beat);
 	});
+var $author$project$Main$noteCSS = function (active) {
+	return active ? 'bg-indigo-500 text-white font-bold py-2 px-4 mr-4 rounded' : 'bg-indigo-100 text-black font-bold py-2 px-4 mr-4 rounded';
+};
 var $author$project$Main$viewSquare = F3(
 	function (model, midi, beat) {
 		return A2(
@@ -6449,12 +6462,13 @@ var $author$project$Main$viewSquare = F3(
 					$elm$html$Html$Attributes$class(
 					$author$project$Main$noteCSS(
 						A3($author$project$Main$getVal, model, midi, beat))),
-					A2($elm$html$Html$Attributes$style, 'padding', '20px')
+					A2($elm$html$Html$Attributes$style, 'padding', '20px'),
+					A2($elm$html$Html$Attributes$style, 'border', '1px solid black')
 				]),
 			_List_fromArray(
 				[
 					$elm$html$Html$text(
-					$elm$core$Debug$toString(beat))
+					$elm$core$Debug$toString(beat + 1))
 				]));
 	});
 var $author$project$Main$viewTrack = F2(
@@ -6463,28 +6477,18 @@ var $author$project$Main$viewTrack = F2(
 			$elm$html$Html$div,
 			_List_fromArray(
 				[
-					$elm$html$Html$Attributes$class('track')
+					A2($elm$html$Html$Attributes$style, 'padding', '10px')
 				]),
-			_List_fromArray(
-				[
-					A2(
-					$elm$html$Html$p,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text(
-							$elm$core$Debug$toString(midi))
-						])),
-					A2(
-					$elm$html$Html$div,
-					_List_Nil,
-					A2(
-						$elm$core$List$map,
-						function (x) {
-							return A3($author$project$Main$viewSquare, model, midi, x);
-						},
-						A2($elm$core$List$range, 0, model.len - 1)))
-				]));
+			A2(
+				$elm$core$List$cons,
+				$elm$html$Html$text(
+					$elm$core$Debug$toString(midi) + ' '),
+				A2(
+					$elm$core$List$map,
+					function (x) {
+						return A3($author$project$Main$viewSquare, model, midi, x);
+					},
+					A2($elm$core$List$range, 0, model.len - 1))));
 	});
 var $author$project$Main$view = function (model) {
 	return A2(
@@ -6559,41 +6563,53 @@ var $author$project$Main$view = function (model) {
 							]))
 					])),
 				A2(
-				$elm$html$Html$input,
+				$elm$html$Html$div,
+				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$type_('range'),
-						$elm$html$Html$Attributes$class('bg-indigo-500 mr-4'),
-						A2($elm$html$Html$Attributes$style, 'padding', '10px'),
-						$elm$html$Html$Attributes$min('50'),
-						$elm$html$Html$Attributes$max('500'),
-						$elm$html$Html$Attributes$value(
-						$elm$core$Debug$toString(model.bpm)),
-						$elm$html$Html$Events$onInput($author$project$Main$Bpm)
-					]),
-				_List_Nil),
+						A2(
+						$elm$html$Html$input,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$type_('range'),
+								$elm$html$Html$Attributes$class('bg-indigo-500 mr-4'),
+								$elm$html$Html$Attributes$min('50'),
+								$elm$html$Html$Attributes$max('500'),
+								$elm$html$Html$Attributes$value(
+								$elm$core$Debug$toString(model.bpm)),
+								$elm$html$Html$Events$onInput($author$project$Main$Bpm)
+							]),
+						_List_Nil),
+						$elm$html$Html$text(
+						'BPM: ' + $elm$core$Debug$toString(model.bpm))
+					])),
 				A2(
 				$elm$html$Html$div,
+				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('flex'),
-						A2($elm$html$Html$Attributes$style, 'padding-bottom', '30px')
-					]),
-				_List_fromArray(
-					[
+						A2(
+						$elm$html$Html$input,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$type_('range'),
+								$elm$html$Html$Attributes$class('bg-indigo-500 mr-4'),
+								$elm$html$Html$Attributes$min('2'),
+								$elm$html$Html$Attributes$max('20'),
+								$elm$html$Html$Attributes$value(
+								$elm$core$Debug$toString(model.len)),
+								$elm$html$Html$Events$onInput($author$project$Main$ChangeBeats)
+							]),
+						_List_Nil),
 						$elm$html$Html$text(
-						' BPM: ' + $elm$core$Debug$toString(model.bpm))
+						'Beats: ' + $elm$core$Debug$toString(model.len))
 					])),
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('flex')
+						A2($elm$html$Html$Attributes$style, 'padding', '10px')
 					]),
-				A2($elm$core$List$map, $author$project$Main$noteView, model.notes)),
-				A2(
-				$elm$html$Html$div,
-				_List_Nil,
 				A2(
 					$elm$core$List$map,
 					function (midi) {

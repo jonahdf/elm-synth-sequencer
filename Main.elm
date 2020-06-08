@@ -256,6 +256,7 @@ type Msg
     | PauseToggle
     | Clear
     | Bpm String
+    | ChangeBeats String
 
 
 
@@ -282,7 +283,7 @@ updateTrack : Model -> Model
 updateTrack model =
     { model
         | beat =
-            if model.beat == model.len then
+            if model.beat >= model.len then
                 0
 
             else
@@ -358,13 +359,17 @@ pauseToggle model =
     }
 
 
+initTracks : Model -> A.Array Track
+initTracks model =
+    A.map
+        (\track -> { track | beats = A.repeat (model.len + 1) False })
+        model.tracks
+
+
 clear : Model -> Model
 clear model =
     { model
-        | tracks =
-            A.map
-                (\track -> { track | beats = A.repeat model.len False })
-                model.tracks
+        | tracks = initTracks model
     }
 
 
@@ -378,6 +383,20 @@ updateBpm model string =
 
                 Nothing ->
                     model.bpm
+    }
+
+
+updateBeats : Model -> String -> Model
+updateBeats model string =
+    { model
+        | len =
+            case String.toInt string of
+                Just i ->
+                    i
+
+                Nothing ->
+                    model.len
+        , tracks = initTracks model
     }
 
 
@@ -432,6 +451,9 @@ update msg model =
 
         Bpm string ->
             ( updateBpm model string, Cmd.none )
+
+        ChangeBeats string ->
+            ( updateBeats model string, Cmd.none )
 
 
 
@@ -522,23 +544,25 @@ viewSquare model midi beat =
                 )
             )
         , style "padding" "20px"
+        , style "border" "1px solid black"
         ]
-        [ text (Debug.toString beat) ]
+        [ text (Debug.toString (beat + 1)) ]
 
 
 viewTrack : Model -> Float -> Html Msg
 viewTrack model midi =
-    div [ class "track" ]
-        [ p [] [ text (Debug.toString midi) ]
-        , div []
-            (List.map
+    div [ style "padding" "10px" ]
+        (text
+            (Debug.toString midi
+                ++ " "
+            )
+            :: List.map
                 (\x -> viewSquare model midi x)
                 (List.range
                     0
                     (model.len - 1)
                 )
-            )
-        ]
+        )
 
 
 view : Model -> Html Msg
@@ -561,23 +585,41 @@ view model =
             , button [ onClick Clear, class "bg-indigo-500 text-white\n            font-bold\n            py-2 px-4 mr-4 rounded" ]
                 [ text "Clear" ]
             ]
-        , Html.input
-            [ H.type_ "range"
-            , class "bg-indigo-500 mr-4"
-            , style "padding" "10px"
-            , H.min "50"
-            , H.max "500"
-            , H.value
-                (Debug.toString
-                    model.bpm
-                )
-            , onInput Bpm
-            ]
-            []
-        , div [ class "flex", style "padding-bottom" "30px" ] [ text (" BPM: " ++ Debug.toString model.bpm) ]
-        , div [ class "flex" ] <|
-            List.map noteView model.notes
         , div []
+            [ Html.input
+                [ H.type_ "range"
+                , class "bg-indigo-500 mr-4"
+
+                -- , style "padding" "10px"
+                , H.min "50"
+                , H.max "500"
+                , H.value
+                    (Debug.toString
+                        model.bpm
+                    )
+                , onInput Bpm
+                ]
+                []
+            , text ("BPM: " ++ Debug.toString model.bpm)
+            ]
+        , div []
+            [ Html.input
+                [ H.type_ "range"
+                , class "bg-indigo-500 mr-4"
+
+                --, style "padding" "10px"
+                , H.min "2"
+                , H.max "20"
+                , H.value
+                    (Debug.toString
+                        model.len
+                    )
+                , onInput ChangeBeats
+                ]
+                []
+            , text ("Beats: " ++ Debug.toString model.len)
+            ]
+        , div [ style "padding" "10px" ]
             (List.map
                 (\midi -> viewTrack model midi)
                 midis
