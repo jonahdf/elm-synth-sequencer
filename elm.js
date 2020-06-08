@@ -80,6 +80,87 @@ function A9(fun, a, b, c, d, e, f, g, h, i) {
 console.warn('Compiled in DEV mode. Follow the advice at https://elm-lang.org/0.19.1/optimize for better performance and smaller assets.');
 
 
+var _List_Nil_UNUSED = { $: 0 };
+var _List_Nil = { $: '[]' };
+
+function _List_Cons_UNUSED(hd, tl) { return { $: 1, a: hd, b: tl }; }
+function _List_Cons(hd, tl) { return { $: '::', a: hd, b: tl }; }
+
+
+var _List_cons = F2(_List_Cons);
+
+function _List_fromArray(arr)
+{
+	var out = _List_Nil;
+	for (var i = arr.length; i--; )
+	{
+		out = _List_Cons(arr[i], out);
+	}
+	return out;
+}
+
+function _List_toArray(xs)
+{
+	for (var out = []; xs.b; xs = xs.b) // WHILE_CONS
+	{
+		out.push(xs.a);
+	}
+	return out;
+}
+
+var _List_map2 = F3(function(f, xs, ys)
+{
+	for (var arr = []; xs.b && ys.b; xs = xs.b, ys = ys.b) // WHILE_CONSES
+	{
+		arr.push(A2(f, xs.a, ys.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_map3 = F4(function(f, xs, ys, zs)
+{
+	for (var arr = []; xs.b && ys.b && zs.b; xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
+	{
+		arr.push(A3(f, xs.a, ys.a, zs.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_map4 = F5(function(f, ws, xs, ys, zs)
+{
+	for (var arr = []; ws.b && xs.b && ys.b && zs.b; ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
+	{
+		arr.push(A4(f, ws.a, xs.a, ys.a, zs.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_map5 = F6(function(f, vs, ws, xs, ys, zs)
+{
+	for (var arr = []; vs.b && ws.b && xs.b && ys.b && zs.b; vs = vs.b, ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
+	{
+		arr.push(A5(f, vs.a, ws.a, xs.a, ys.a, zs.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_sortBy = F2(function(f, xs)
+{
+	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
+		return _Utils_cmp(f(a), f(b));
+	}));
+});
+
+var _List_sortWith = F2(function(f, xs)
+{
+	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
+		var ord = A2(f, a, b);
+		return ord === $elm$core$Basics$EQ ? 0 : ord === $elm$core$Basics$LT ? -1 : 1;
+	}));
+});
+
+
+
 var _JsArray_empty = [];
 
 function _JsArray_singleton(value)
@@ -709,87 +790,6 @@ function _Utils_ap(xs, ys)
 	}
 	return root;
 }
-
-
-
-var _List_Nil_UNUSED = { $: 0 };
-var _List_Nil = { $: '[]' };
-
-function _List_Cons_UNUSED(hd, tl) { return { $: 1, a: hd, b: tl }; }
-function _List_Cons(hd, tl) { return { $: '::', a: hd, b: tl }; }
-
-
-var _List_cons = F2(_List_Cons);
-
-function _List_fromArray(arr)
-{
-	var out = _List_Nil;
-	for (var i = arr.length; i--; )
-	{
-		out = _List_Cons(arr[i], out);
-	}
-	return out;
-}
-
-function _List_toArray(xs)
-{
-	for (var out = []; xs.b; xs = xs.b) // WHILE_CONS
-	{
-		out.push(xs.a);
-	}
-	return out;
-}
-
-var _List_map2 = F3(function(f, xs, ys)
-{
-	for (var arr = []; xs.b && ys.b; xs = xs.b, ys = ys.b) // WHILE_CONSES
-	{
-		arr.push(A2(f, xs.a, ys.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_map3 = F4(function(f, xs, ys, zs)
-{
-	for (var arr = []; xs.b && ys.b && zs.b; xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
-	{
-		arr.push(A3(f, xs.a, ys.a, zs.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_map4 = F5(function(f, ws, xs, ys, zs)
-{
-	for (var arr = []; ws.b && xs.b && ys.b && zs.b; ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
-	{
-		arr.push(A4(f, ws.a, xs.a, ys.a, zs.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_map5 = F6(function(f, vs, ws, xs, ys, zs)
-{
-	for (var arr = []; vs.b && ws.b && xs.b && ys.b && zs.b; vs = vs.b, ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
-	{
-		arr.push(A5(f, vs.a, ws.a, xs.a, ys.a, zs.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_sortBy = F2(function(f, xs)
-{
-	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
-		return _Utils_cmp(f(a), f(b));
-	}));
-});
-
-var _List_sortWith = F2(function(f, xs)
-{
-	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
-		var ord = A2(f, a, b);
-		return ord === $elm$core$Basics$EQ ? 0 : ord === $elm$core$Basics$LT ? -1 : 1;
-	}));
-});
 
 
 
@@ -4438,6 +4438,8 @@ function _Time_getZoneName()
 		callback(_Scheduler_succeed(name));
 	});
 }
+var $elm$core$Basics$EQ = {$: 'EQ'};
+var $elm$core$Basics$LT = {$: 'LT'};
 var $elm$core$List$cons = _List_cons;
 var $elm$core$Elm$JsArray$foldr = _JsArray_foldr;
 var $elm$core$Array$foldr = F3(
@@ -4515,9 +4517,8 @@ var $elm$core$Set$toList = function (_v0) {
 	var dict = _v0.a;
 	return $elm$core$Dict$keys(dict);
 };
-var $elm$core$Basics$EQ = {$: 'EQ'};
 var $elm$core$Basics$GT = {$: 'GT'};
-var $elm$core$Basics$LT = {$: 'LT'};
+var $elm$core$Basics$append = _Utils_append;
 var $elm$core$Basics$add = _Basics_add;
 var $elm$core$List$foldl = F3(
 	function (func, acc, list) {
@@ -4665,7 +4666,6 @@ var $elm$core$Maybe$Just = function (a) {
 var $elm$core$Maybe$Nothing = {$: 'Nothing'};
 var $elm$core$String$all = _String_all;
 var $elm$core$Basics$and = _Basics_and;
-var $elm$core$Basics$append = _Utils_append;
 var $elm$json$Json$Encode$encode = _Json_encode;
 var $elm$core$String$fromInt = _String_fromNumber;
 var $elm$core$String$join = F2(
@@ -5042,11 +5042,38 @@ var $author$project$Main$voice = F2(
 						[$pd_andy$elm_web_audio$WebAudio$dac]))
 				]));
 	});
+var $author$project$Main$voicePiano = F2(
+	function (transpose, note) {
+		return A2(
+			$pd_andy$elm_web_audio$WebAudio$oscillator,
+			_List_fromArray(
+				[
+					$pd_andy$elm_web_audio$WebAudio$Property$frequency(
+					$author$project$Main$mtof(note.midi + transpose))
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$pd_andy$elm_web_audio$WebAudio$gain,
+					_List_fromArray(
+						[
+							$pd_andy$elm_web_audio$WebAudio$Property$gain(
+							note.triggered ? 0.3 : 0)
+						]),
+					_List_fromArray(
+						[$pd_andy$elm_web_audio$WebAudio$dac]))
+				]));
+	});
 var $author$project$Main$audio = function (model) {
-	return A2(
-		$elm$core$List$map,
-		$author$project$Main$voice(model.transpose),
-		model.notes);
+	return _Utils_ap(
+		A2(
+			$elm$core$List$map,
+			$author$project$Main$voice(model.transpose),
+			model.notes),
+		A2(
+			$elm$core$List$map,
+			$author$project$Main$voicePiano(model.transpose),
+			model.piano));
 };
 var $elm$json$Json$Decode$map = _Json_map1;
 var $elm$json$Json$Decode$map2 = _Json_map2;
@@ -5501,7 +5528,8 @@ var $author$project$Main$initialModel = _List_fromArray(
 		{key: 'a', midi: 69, triggered: false},
 		{key: 'b', midi: 71, triggered: false},
 		{key: 'c', midi: 72, triggered: false},
-		{key: 'd', midi: 74, triggered: false}
+		{key: 'd', midi: 74, triggered: false},
+		{key: 'e', midi: 75, triggered: false}
 	]);
 var $elm$core$Array$fromListHelp = F3(
 	function (list, nodeList, nodeListSize) {
@@ -5717,10 +5745,35 @@ var $author$project$Main$trackSetList = F2(
 		}
 	});
 var $author$project$Main$initialTrack = A2($author$project$Main$trackSetList, $author$project$Main$initialTrackHelp, $author$project$Main$s);
+var $author$project$Main$keys = _List_fromArray(
+	['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';']);
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
+var $author$project$Main$updateKeys = F2(
+	function (notes, keyList) {
+		return A3(
+			$elm$core$List$map2,
+			F2(
+				function (note, k) {
+					return _Utils_update(
+						note,
+						{key: k});
+				}),
+			notes,
+			keyList);
+	});
 var $author$project$Main$init = function (co) {
 	return _Utils_Tuple2(
-		{beat: 0, bpm: 200, context: co, go: true, len: 8, notes: $author$project$Main$initialModel, tracks: $author$project$Main$initialTrack, transpose: 0},
+		{
+			beat: 0,
+			bpm: 200,
+			context: co,
+			go: true,
+			len: 8,
+			notes: $author$project$Main$initialModel,
+			piano: A2($author$project$Main$updateKeys, $author$project$Main$initialModel, $author$project$Main$keys),
+			tracks: $author$project$Main$initialTrack,
+			transpose: 0
+		},
 		$elm$core$Platform$Cmd$none);
 };
 var $author$project$Main$NextStep = function (a) {
@@ -6142,10 +6195,286 @@ var $elm$time$Time$every = F2(
 		return $elm$time$Time$subscription(
 			A2($elm$time$Time$Every, interval, tagger));
 	});
+var $author$project$Main$NoteOff = function (a) {
+	return {$: 'NoteOff', a: a};
+};
+var $elm$json$Json$Decode$andThen = _Json_andThen;
+var $elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
+var $elm$json$Json$Decode$fail = _Json_fail;
+var $elm$json$Json$Decode$field = _Json_decodeField;
+var $elm$json$Json$Decode$string = _Json_decodeString;
+var $author$project$Main$noteOffDecoder = function (notes) {
+	return A2(
+		$elm$json$Json$Decode$andThen,
+		function (key) {
+			var _v0 = A2(
+				$elm$core$List$any,
+				function (note) {
+					return _Utils_eq(note.key, key);
+				},
+				notes);
+			if (_v0) {
+				return $elm$json$Json$Decode$succeed(
+					$author$project$Main$NoteOff(key));
+			} else {
+				return $elm$json$Json$Decode$fail('');
+			}
+		},
+		A2($elm$json$Json$Decode$field, 'key', $elm$json$Json$Decode$string));
+};
+var $author$project$Main$NoteOn = function (a) {
+	return {$: 'NoteOn', a: a};
+};
+var $author$project$Main$noteOnDecoder = function (notes) {
+	return A2(
+		$elm$json$Json$Decode$andThen,
+		function (key) {
+			var _v0 = A2(
+				$elm$core$List$any,
+				function (note) {
+					return _Utils_eq(note.key, key);
+				},
+				notes);
+			if (_v0) {
+				return $elm$json$Json$Decode$succeed(
+					$author$project$Main$NoteOn(key));
+			} else {
+				return $elm$json$Json$Decode$fail('');
+			}
+		},
+		A2($elm$json$Json$Decode$field, 'key', $elm$json$Json$Decode$string));
+};
+var $elm$browser$Browser$Events$Document = {$: 'Document'};
+var $elm$browser$Browser$Events$MySub = F3(
+	function (a, b, c) {
+		return {$: 'MySub', a: a, b: b, c: c};
+	});
+var $elm$browser$Browser$Events$State = F2(
+	function (subs, pids) {
+		return {pids: pids, subs: subs};
+	});
+var $elm$browser$Browser$Events$init = $elm$core$Task$succeed(
+	A2($elm$browser$Browser$Events$State, _List_Nil, $elm$core$Dict$empty));
+var $elm$browser$Browser$Events$nodeToKey = function (node) {
+	if (node.$ === 'Document') {
+		return 'd_';
+	} else {
+		return 'w_';
+	}
+};
+var $elm$browser$Browser$Events$addKey = function (sub) {
+	var node = sub.a;
+	var name = sub.b;
+	return _Utils_Tuple2(
+		_Utils_ap(
+			$elm$browser$Browser$Events$nodeToKey(node),
+			name),
+		sub);
+};
+var $elm$core$Dict$fromList = function (assocs) {
+	return A3(
+		$elm$core$List$foldl,
+		F2(
+			function (_v0, dict) {
+				var key = _v0.a;
+				var value = _v0.b;
+				return A3($elm$core$Dict$insert, key, value, dict);
+			}),
+		$elm$core$Dict$empty,
+		assocs);
+};
+var $elm$browser$Browser$Events$Event = F2(
+	function (key, event) {
+		return {event: event, key: key};
+	});
+var $elm$browser$Browser$Events$spawn = F3(
+	function (router, key, _v0) {
+		var node = _v0.a;
+		var name = _v0.b;
+		var actualNode = function () {
+			if (node.$ === 'Document') {
+				return _Browser_doc;
+			} else {
+				return _Browser_window;
+			}
+		}();
+		return A2(
+			$elm$core$Task$map,
+			function (value) {
+				return _Utils_Tuple2(key, value);
+			},
+			A3(
+				_Browser_on,
+				actualNode,
+				name,
+				function (event) {
+					return A2(
+						$elm$core$Platform$sendToSelf,
+						router,
+						A2($elm$browser$Browser$Events$Event, key, event));
+				}));
+	});
+var $elm$core$Dict$union = F2(
+	function (t1, t2) {
+		return A3($elm$core$Dict$foldl, $elm$core$Dict$insert, t2, t1);
+	});
+var $elm$browser$Browser$Events$onEffects = F3(
+	function (router, subs, state) {
+		var stepRight = F3(
+			function (key, sub, _v6) {
+				var deads = _v6.a;
+				var lives = _v6.b;
+				var news = _v6.c;
+				return _Utils_Tuple3(
+					deads,
+					lives,
+					A2(
+						$elm$core$List$cons,
+						A3($elm$browser$Browser$Events$spawn, router, key, sub),
+						news));
+			});
+		var stepLeft = F3(
+			function (_v4, pid, _v5) {
+				var deads = _v5.a;
+				var lives = _v5.b;
+				var news = _v5.c;
+				return _Utils_Tuple3(
+					A2($elm$core$List$cons, pid, deads),
+					lives,
+					news);
+			});
+		var stepBoth = F4(
+			function (key, pid, _v2, _v3) {
+				var deads = _v3.a;
+				var lives = _v3.b;
+				var news = _v3.c;
+				return _Utils_Tuple3(
+					deads,
+					A3($elm$core$Dict$insert, key, pid, lives),
+					news);
+			});
+		var newSubs = A2($elm$core$List$map, $elm$browser$Browser$Events$addKey, subs);
+		var _v0 = A6(
+			$elm$core$Dict$merge,
+			stepLeft,
+			stepBoth,
+			stepRight,
+			state.pids,
+			$elm$core$Dict$fromList(newSubs),
+			_Utils_Tuple3(_List_Nil, $elm$core$Dict$empty, _List_Nil));
+		var deadPids = _v0.a;
+		var livePids = _v0.b;
+		var makeNewPids = _v0.c;
+		return A2(
+			$elm$core$Task$andThen,
+			function (pids) {
+				return $elm$core$Task$succeed(
+					A2(
+						$elm$browser$Browser$Events$State,
+						newSubs,
+						A2(
+							$elm$core$Dict$union,
+							livePids,
+							$elm$core$Dict$fromList(pids))));
+			},
+			A2(
+				$elm$core$Task$andThen,
+				function (_v1) {
+					return $elm$core$Task$sequence(makeNewPids);
+				},
+				$elm$core$Task$sequence(
+					A2($elm$core$List$map, $elm$core$Process$kill, deadPids))));
+	});
+var $elm$core$List$maybeCons = F3(
+	function (f, mx, xs) {
+		var _v0 = f(mx);
+		if (_v0.$ === 'Just') {
+			var x = _v0.a;
+			return A2($elm$core$List$cons, x, xs);
+		} else {
+			return xs;
+		}
+	});
+var $elm$core$List$filterMap = F2(
+	function (f, xs) {
+		return A3(
+			$elm$core$List$foldr,
+			$elm$core$List$maybeCons(f),
+			_List_Nil,
+			xs);
+	});
+var $elm$browser$Browser$Events$onSelfMsg = F3(
+	function (router, _v0, state) {
+		var key = _v0.key;
+		var event = _v0.event;
+		var toMessage = function (_v2) {
+			var subKey = _v2.a;
+			var _v3 = _v2.b;
+			var node = _v3.a;
+			var name = _v3.b;
+			var decoder = _v3.c;
+			return _Utils_eq(subKey, key) ? A2(_Browser_decodeEvent, decoder, event) : $elm$core$Maybe$Nothing;
+		};
+		var messages = A2($elm$core$List$filterMap, toMessage, state.subs);
+		return A2(
+			$elm$core$Task$andThen,
+			function (_v1) {
+				return $elm$core$Task$succeed(state);
+			},
+			$elm$core$Task$sequence(
+				A2(
+					$elm$core$List$map,
+					$elm$core$Platform$sendToApp(router),
+					messages)));
+	});
+var $elm$browser$Browser$Events$subMap = F2(
+	function (func, _v0) {
+		var node = _v0.a;
+		var name = _v0.b;
+		var decoder = _v0.c;
+		return A3(
+			$elm$browser$Browser$Events$MySub,
+			node,
+			name,
+			A2($elm$json$Json$Decode$map, func, decoder));
+	});
+_Platform_effectManagers['Browser.Events'] = _Platform_createManager($elm$browser$Browser$Events$init, $elm$browser$Browser$Events$onEffects, $elm$browser$Browser$Events$onSelfMsg, 0, $elm$browser$Browser$Events$subMap);
+var $elm$browser$Browser$Events$subscription = _Platform_leaf('Browser.Events');
+var $elm$browser$Browser$Events$on = F3(
+	function (node, name, decoder) {
+		return $elm$browser$Browser$Events$subscription(
+			A3($elm$browser$Browser$Events$MySub, node, name, decoder));
+	});
+var $elm$browser$Browser$Events$onKeyDown = A2($elm$browser$Browser$Events$on, $elm$browser$Browser$Events$Document, 'keydown');
+var $elm$browser$Browser$Events$onKeyUp = A2($elm$browser$Browser$Events$on, $elm$browser$Browser$Events$Document, 'keyup');
 var $author$project$Main$subscriptions = function (model) {
 	return $elm$core$Platform$Sub$batch(
 		_List_fromArray(
 			[
+				$elm$browser$Browser$Events$onKeyDown(
+				$author$project$Main$noteOnDecoder(model.piano)),
+				$elm$browser$Browser$Events$onKeyUp(
+				$author$project$Main$noteOffDecoder(model.piano)),
 				A2($elm$time$Time$every, 60000 / model.bpm, $author$project$Main$NextStep)
 			]));
 };
@@ -6168,6 +6497,36 @@ var $author$project$Main$clear = function (model) {
 			tracks: $author$project$Main$initTracks(model)
 		});
 };
+var $author$project$Main$noteOff = F2(
+	function (key, model) {
+		return _Utils_update(
+			model,
+			{
+				piano: A2(
+					$elm$core$List$map,
+					function (note) {
+						return _Utils_eq(note.key, key) ? _Utils_update(
+							note,
+							{triggered: false}) : note;
+					},
+					model.piano)
+			});
+	});
+var $author$project$Main$noteOn = F2(
+	function (key, model) {
+		return _Utils_update(
+			model,
+			{
+				piano: A2(
+					$elm$core$List$map,
+					function (note) {
+						return _Utils_eq(note.key, key) ? _Utils_update(
+							note,
+							{triggered: true}) : note;
+					},
+					model.piano)
+			});
+	});
 var $elm$core$Tuple$pair = F2(
 	function (a, b) {
 		return _Utils_Tuple2(a, b);
@@ -6179,16 +6538,6 @@ var $author$project$Main$pauseToggle = function (model) {
 			go: model.go ? false : true,
 			notes: _List_Nil
 		});
-};
-var $author$project$Main$transposeDown = function (model) {
-	return _Utils_update(
-		model,
-		{transpose: model.transpose - 0.5});
-};
-var $author$project$Main$transposeUp = function (model) {
-	return _Utils_update(
-		model,
-		{transpose: model.transpose + 0.5});
 };
 var $author$project$Main$updateBeats = F2(
 	function (model, string) {
@@ -6224,6 +6573,11 @@ var $author$project$Main$updateBpm = F2(
 				}()
 			});
 	});
+var $author$project$Main$updateReset = function (model) {
+	return _Utils_update(
+		model,
+		{bpm: 200, len: 8, transpose: 0});
+};
 var $author$project$Main$updateToggle = F3(
 	function (model, midi, beat) {
 		return _Utils_update(
@@ -6256,22 +6610,53 @@ var $author$project$Main$updateTrack = function (model) {
 					model.tracks))
 		});
 };
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var $author$project$Main$updateTranspose = F2(
+	function (model, t) {
+		return _Utils_update(
+			model,
+			{
+				transpose: A2(
+					$elm$core$Maybe$withDefault,
+					0,
+					$elm$core$String$toFloat(t))
+			});
+	});
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
 			case 'NoOp':
 				return A2($elm$core$Tuple$pair, model, $elm$core$Platform$Cmd$none);
+			case 'NoteOn':
+				var key = msg.a;
+				return _Utils_Tuple2(
+					A2($author$project$Main$noteOn, key, model),
+					$elm$core$Platform$Cmd$none);
+			case 'NoteOff':
+				var key = msg.a;
+				return _Utils_Tuple2(
+					A2($author$project$Main$noteOff, key, model),
+					$elm$core$Platform$Cmd$none);
 			case 'PauseToggle':
 				return _Utils_Tuple2(
 					$author$project$Main$pauseToggle(model),
 					$elm$core$Platform$Cmd$none);
-			case 'TransposeUp':
+			case 'Transpose':
+				var string = msg.a;
 				return _Utils_Tuple2(
-					$author$project$Main$transposeUp(model),
+					A2($author$project$Main$updateTranspose, model, string),
 					$elm$core$Platform$Cmd$none);
-			case 'TransposeDown':
+			case 'Reset':
 				return _Utils_Tuple2(
-					$author$project$Main$transposeDown(model),
+					$author$project$Main$updateReset(model),
 					$elm$core$Platform$Cmd$none);
 			case 'NextStep':
 				var newTime = msg.a;
@@ -6310,8 +6695,10 @@ var $author$project$Main$ChangeBeats = function (a) {
 };
 var $author$project$Main$Clear = {$: 'Clear'};
 var $author$project$Main$PauseToggle = {$: 'PauseToggle'};
-var $author$project$Main$TransposeDown = {$: 'TransposeDown'};
-var $author$project$Main$TransposeUp = {$: 'TransposeUp'};
+var $author$project$Main$Reset = {$: 'Reset'};
+var $author$project$Main$Transpose = function (a) {
+	return {$: 'Transpose', a: a};
+};
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
@@ -6323,12 +6710,13 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
 var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$html$Html$h1 = _VirtualDom_node('h1');
+var $elm$html$Html$h3 = _VirtualDom_node('h3');
 var $elm$html$Html$hr = _VirtualDom_node('hr');
 var $elm$html$Html$input = _VirtualDom_node('input');
 var $elm$html$Html$main_ = _VirtualDom_node('main');
 var $elm$html$Html$Attributes$max = $elm$html$Html$Attributes$stringProperty('max');
 var $author$project$Main$midis = _List_fromArray(
-	[60, 62, 64, 65, 67, 69, 71, 72, 74]);
+	[60, 62, 64, 65, 67, 69, 71, 72, 74, 75]);
 var $elm$html$Html$Attributes$min = $elm$html$Html$Attributes$stringProperty('min');
 var $author$project$Main$noteCSS = function (active) {
 	return active ? 'bg-indigo-500 text-white font-bold py-2 px-4 mr-4 rounded' : 'bg-indigo-100 text-black font-bold py-2 px-4 mr-4 rounded';
@@ -6379,12 +6767,10 @@ var $elm$html$Html$Events$stopPropagationOn = F2(
 			event,
 			$elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
 	});
-var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$at = F2(
 	function (fields, decoder) {
 		return A3($elm$core$List$foldr, $elm$json$Json$Decode$field, decoder, fields);
 	});
-var $elm$json$Json$Decode$string = _Json_decodeString;
 var $elm$html$Html$Events$targetValue = A2(
 	$elm$json$Json$Decode$at,
 	_List_fromArray(
@@ -6399,10 +6785,14 @@ var $elm$html$Html$Events$onInput = function (tagger) {
 			$elm$html$Html$Events$alwaysStop,
 			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
 };
+var $elm$html$Html$Attributes$step = function (n) {
+	return A2($elm$html$Html$Attributes$stringProperty, 'step', n);
+};
 var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $elm$core$Debug$toString = _Debug_toString;
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
+var $elm$html$Html$u = _VirtualDom_node('u');
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Main$viewMeter = F2(
 	function (model, beat) {
@@ -6452,8 +6842,8 @@ var $author$project$Main$midiToIndex = F2(
 						return _Debug_todo(
 							'Main',
 							{
-								start: {line: 193, column: 21},
-								end: {line: 193, column: 31}
+								start: {line: 204, column: 21},
+								end: {line: 204, column: 31}
 							})('not in model');
 					} else {
 						var h = lst.a;
@@ -6534,6 +6924,30 @@ var $author$project$Main$view = function (model) {
 						$elm$html$Html$text('Elm Synth Sequencer by Jonah Fleishhacker')
 					])),
 				A2(
+				$elm$html$Html$h3,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'text-align', 'center')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$u,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Piano')
+							]))
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('flex'),
+						A2($elm$html$Html$Attributes$style, 'padding', '10px')
+					]),
+				A2($elm$core$List$map, $author$project$Main$noteView, model.piano)),
+				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
@@ -6541,28 +6955,6 @@ var $author$project$Main$view = function (model) {
 					]),
 				_List_fromArray(
 					[
-						A2(
-						$elm$html$Html$button,
-						_List_fromArray(
-							[
-								$elm$html$Html$Events$onClick($author$project$Main$TransposeUp),
-								$elm$html$Html$Attributes$class('bg-indigo-500 text-white font-bold py-2 px-4 mr-4 rounded')
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text('Transpose up')
-							])),
-						A2(
-						$elm$html$Html$button,
-						_List_fromArray(
-							[
-								$elm$html$Html$Events$onClick($author$project$Main$TransposeDown),
-								$elm$html$Html$Attributes$class('bg-indigo-500 text-white\n            font-bold py-2 px-4 mr-4 rounded')
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text('Transpose down')
-							])),
 						A2(
 						$elm$html$Html$button,
 						_List_fromArray(
@@ -6584,7 +6976,40 @@ var $author$project$Main$view = function (model) {
 						_List_fromArray(
 							[
 								$elm$html$Html$text('Clear')
+							])),
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick($author$project$Main$Reset),
+								$elm$html$Html$Attributes$class('bg-indigo-500 text-white font-bold\n            py-2 px-4 mr-4 rounded')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Reset Sliders')
 							]))
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$input,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$type_('range'),
+								$elm$html$Html$Attributes$class('bg-indigo-500 mr-4'),
+								$elm$html$Html$Attributes$min('-15.0'),
+								$elm$html$Html$Attributes$max('15.0'),
+								$elm$html$Html$Attributes$step('0.5'),
+								$elm$html$Html$Attributes$value(
+								$elm$core$Debug$toString(model.transpose)),
+								$elm$html$Html$Events$onInput($author$project$Main$Transpose)
+							]),
+						_List_Nil),
+						$elm$html$Html$text(
+						'Transpose Value: ' + $elm$core$Debug$toString(model.transpose))
 					])),
 				A2(
 				$elm$html$Html$div,
@@ -6633,6 +7058,22 @@ var $author$project$Main$view = function (model) {
 					])),
 				A2($elm$html$Html$hr, _List_Nil, _List_Nil),
 				A2(
+				$elm$html$Html$h3,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'text-align', 'center')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$u,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Sequencer\n        Notes')
+							]))
+					])),
+				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
@@ -6641,6 +7082,22 @@ var $author$project$Main$view = function (model) {
 					]),
 				A2($elm$core$List$map, $author$project$Main$noteView, model.notes)),
 				A2($elm$html$Html$hr, _List_Nil, _List_Nil),
+				A2(
+				$elm$html$Html$h3,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'text-align', 'center')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$u,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Beat\n        Indicator')
+							]))
+					])),
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
