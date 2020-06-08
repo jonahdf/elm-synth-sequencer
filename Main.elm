@@ -543,7 +543,6 @@ viewSquare model midi beat =
                     beat
                 )
             )
-        , style "padding" "20px"
         , style "border" "1px solid black"
         ]
         [ text (Debug.toString (beat + 1)) ]
@@ -551,7 +550,7 @@ viewSquare model midi beat =
 
 viewTrack : Model -> Float -> Html Msg
 viewTrack model midi =
-    div [ style "padding" "10px" ]
+    div [ style "padding-bottom" "10px" ]
         (text
             (Debug.toString midi
                 ++ " "
@@ -563,6 +562,15 @@ viewTrack model midi =
                     (model.len - 1)
                 )
         )
+
+
+viewMeter : Model -> Int -> Html Msg
+viewMeter model beat =
+    div
+        [ style "padding" "20px"
+        , class (noteCSS (model.beat == beat))
+        ]
+        [ text (Debug.toString beat) ]
 
 
 view : Model -> Html Msg
@@ -602,7 +610,7 @@ view model =
                 []
             , text ("BPM: " ++ Debug.toString model.bpm)
             ]
-        , div []
+        , div [ style "padding-bottom" "10px" ]
             [ Html.input
                 [ H.type_ "range"
                 , class "bg-indigo-500 mr-4"
@@ -619,7 +627,30 @@ view model =
                 []
             , text ("Beats: " ++ Debug.toString model.len)
             ]
-        , div [ style "padding" "10px" ]
+        , Html.hr [] []
+        , div [ class "flex", style "padding" "10px" ] <|
+            List.map noteView model.notes
+        , Html.hr [] []
+        , div
+            [ style "padding" "10px"
+            , class "flex-container"
+            , style "display"
+                "flex"
+            , style "justify-content" "center"
+            ]
+          <|
+            List.map
+                (\x -> viewMeter model x)
+                (List.range 1 model.len)
+        , Html.hr [ style "padding" "10px" ] []
+        , div
+            [ style "padding" "10px"
+            , class "flex-container"
+            , style "flex-direction" "column"
+            , style "display"
+                "flex"
+            , style "justify-content" "left"
+            ]
             (List.map
                 (\midi -> viewTrack model midi)
                 midis

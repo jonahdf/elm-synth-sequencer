@@ -6323,12 +6323,32 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
 var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$html$Html$h1 = _VirtualDom_node('h1');
+var $elm$html$Html$hr = _VirtualDom_node('hr');
 var $elm$html$Html$input = _VirtualDom_node('input');
 var $elm$html$Html$main_ = _VirtualDom_node('main');
 var $elm$html$Html$Attributes$max = $elm$html$Html$Attributes$stringProperty('max');
 var $author$project$Main$midis = _List_fromArray(
 	[60, 62, 64, 65, 67, 69, 71, 72, 74]);
 var $elm$html$Html$Attributes$min = $elm$html$Html$Attributes$stringProperty('min');
+var $author$project$Main$noteCSS = function (active) {
+	return active ? 'bg-indigo-500 text-white font-bold py-2 px-4 mr-4 rounded' : 'bg-indigo-100 text-black font-bold py-2 px-4 mr-4 rounded';
+};
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $author$project$Main$noteView = function (note) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class(
+				$author$project$Main$noteCSS(note.triggered)),
+				$elm$html$Html$Attributes$class('flex-1 mx-2 text-center')
+			]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text(note.key)
+			]));
+};
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -6381,11 +6401,26 @@ var $elm$html$Html$Events$onInput = function (tagger) {
 };
 var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $elm$core$Debug$toString = _Debug_toString;
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
+var $author$project$Main$viewMeter = F2(
+	function (model, beat) {
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'padding', '20px'),
+					$elm$html$Html$Attributes$class(
+					$author$project$Main$noteCSS(
+						_Utils_eq(model.beat, beat)))
+				]),
+			_List_fromArray(
+				[
+					$elm$html$Html$text(
+					$elm$core$Debug$toString(beat))
+				]));
+	});
 var $author$project$Main$ToggleNote = F2(
 	function (a, b) {
 		return {$: 'ToggleNote', a: a, b: b};
@@ -6448,9 +6483,6 @@ var $author$project$Main$getVal = F3(
 			A2($author$project$Main$midiToIndex, model, midi),
 			beat);
 	});
-var $author$project$Main$noteCSS = function (active) {
-	return active ? 'bg-indigo-500 text-white font-bold py-2 px-4 mr-4 rounded' : 'bg-indigo-100 text-black font-bold py-2 px-4 mr-4 rounded';
-};
 var $author$project$Main$viewSquare = F3(
 	function (model, midi, beat) {
 		return A2(
@@ -6462,7 +6494,6 @@ var $author$project$Main$viewSquare = F3(
 					$elm$html$Html$Attributes$class(
 					$author$project$Main$noteCSS(
 						A3($author$project$Main$getVal, model, midi, beat))),
-					A2($elm$html$Html$Attributes$style, 'padding', '20px'),
 					A2($elm$html$Html$Attributes$style, 'border', '1px solid black')
 				]),
 			_List_fromArray(
@@ -6477,7 +6508,7 @@ var $author$project$Main$viewTrack = F2(
 			$elm$html$Html$div,
 			_List_fromArray(
 				[
-					A2($elm$html$Html$Attributes$style, 'padding', '10px')
+					A2($elm$html$Html$Attributes$style, 'padding-bottom', '10px')
 				]),
 			A2(
 				$elm$core$List$cons,
@@ -6585,7 +6616,10 @@ var $author$project$Main$view = function (model) {
 					])),
 				A2(
 				$elm$html$Html$div,
-				_List_Nil,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'padding-bottom', '10px')
+					]),
 				_List_fromArray(
 					[
 						A2(
@@ -6604,11 +6638,47 @@ var $author$project$Main$view = function (model) {
 						$elm$html$Html$text(
 						'Beats: ' + $elm$core$Debug$toString(model.len))
 					])),
+				A2($elm$html$Html$hr, _List_Nil, _List_Nil),
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
+						$elm$html$Html$Attributes$class('flex'),
 						A2($elm$html$Html$Attributes$style, 'padding', '10px')
+					]),
+				A2($elm$core$List$map, $author$project$Main$noteView, model.notes)),
+				A2($elm$html$Html$hr, _List_Nil, _List_Nil),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'padding', '10px'),
+						$elm$html$Html$Attributes$class('flex-container'),
+						A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+						A2($elm$html$Html$Attributes$style, 'justify-content', 'center')
+					]),
+				A2(
+					$elm$core$List$map,
+					function (x) {
+						return A2($author$project$Main$viewMeter, model, x);
+					},
+					A2($elm$core$List$range, 1, model.len))),
+				A2(
+				$elm$html$Html$hr,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'padding', '10px')
+					]),
+				_List_Nil),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'padding', '10px'),
+						$elm$html$Html$Attributes$class('flex-container'),
+						A2($elm$html$Html$Attributes$style, 'flex-direction', 'column'),
+						A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+						A2($elm$html$Html$Attributes$style, 'justify-content', 'left')
 					]),
 				A2(
 					$elm$core$List$map,
