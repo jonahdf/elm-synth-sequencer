@@ -887,7 +887,7 @@ viewSquare model midi beat key =
         , style "border" "1px solid black"
         , style "padding" "20px"
         , style "font-size" "small"
-        , style "width" "60px"
+        , style "width" "55px"
         ]
         [ text (Debug.toString (beat + 1)) ]
 
@@ -1065,7 +1065,7 @@ view model =
 
                 --, style "padding" "10px"
                 , H.min "2"
-                , H.max "30"
+                , H.max "32"
                 , H.value
                     (Debug.toString
                         model.len

@@ -7521,7 +7521,7 @@ var $author$project$Main$viewSquare = F4(
 					A2($elm$html$Html$Attributes$style, 'border', '1px solid black'),
 					A2($elm$html$Html$Attributes$style, 'padding', '20px'),
 					A2($elm$html$Html$Attributes$style, 'font-size', 'small'),
-					A2($elm$html$Html$Attributes$style, 'width', '60px')
+					A2($elm$html$Html$Attributes$style, 'width', '55px')
 				]),
 			_List_fromArray(
 				[
@@ -7811,7 +7811,7 @@ var $author$project$Main$view = function (model) {
 								$elm$html$Html$Attributes$type_('range'),
 								$elm$html$Html$Attributes$class('bg-indigo-500 mr-4'),
 								$elm$html$Html$Attributes$min('2'),
-								$elm$html$Html$Attributes$max('30'),
+								$elm$html$Html$Attributes$max('32'),
 								$elm$html$Html$Attributes$value(
 								$elm$core$Debug$toString(model.len)),
 								$elm$html$Html$Events$onInput($author$project$Main$ChangeBeats)
