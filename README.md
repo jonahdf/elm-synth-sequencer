@@ -10,4 +10,4 @@ elm make Main.elm --output=elm.js
 Run a server and enjoy!
 
 ### Or play around with it here!
-https://jonahdf.github.io/elm-synth-sequencer/
+jonahdf.com
