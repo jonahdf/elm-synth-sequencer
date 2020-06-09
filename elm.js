@@ -6751,7 +6751,7 @@ var $author$project$Main$scales = $elm$core$Dict$fromList(
 			'Chromatic',
 			A2(
 				$author$project$Main$Scale,
-				'Minor Arpeggio',
+				'Chromatic',
 				_List_fromArray(
 					[
 						_Utils_Tuple2('C4', 60),
@@ -6763,7 +6763,22 @@ var $author$project$Main$scales = $elm$core$Dict$fromList(
 						_Utils_Tuple2('F#4', 66),
 						_Utils_Tuple2('G4', 67),
 						_Utils_Tuple2('G#4', 68),
-						_Utils_Tuple2('A4', 69)
+						_Utils_Tuple2('A4', 69),
+						_Utils_Tuple2('A#4', 70),
+						_Utils_Tuple2('B4', 71),
+						_Utils_Tuple2('C5', 72),
+						_Utils_Tuple2('C#5', 73),
+						_Utils_Tuple2('D5', 74),
+						_Utils_Tuple2('D#5', 75),
+						_Utils_Tuple2('E5', 76),
+						_Utils_Tuple2('F5', 77),
+						_Utils_Tuple2('F#5', 78),
+						_Utils_Tuple2('G5', 79),
+						_Utils_Tuple2('G#5', 80),
+						_Utils_Tuple2('A5', 81),
+						_Utils_Tuple2('A#5', 82),
+						_Utils_Tuple2('B5', 83),
+						_Utils_Tuple2('C6', 84)
 					])))
 		]));
 var $elm$core$Maybe$withDefault = F2(
@@ -7461,8 +7476,8 @@ var $author$project$Main$midiToIndex = F2(
 						return _Debug_todo(
 							'Main',
 							{
-								start: {line: 411, column: 21},
-								end: {line: 411, column: 31}
+								start: {line: 426, column: 21},
+								end: {line: 426, column: 31}
 							})('not in model');
 					} else {
 						var h = lst.a;
