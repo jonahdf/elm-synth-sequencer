@@ -4404,6 +4404,184 @@ function _Time_getZoneName()
 
 
 
+// DECODER
+
+var _File_decoder = _Json_decodePrim(function(value) {
+	// NOTE: checks if `File` exists in case this is run on node
+	return (typeof File !== 'undefined' && value instanceof File)
+		? $elm$core$Result$Ok(value)
+		: _Json_expecting('a FILE', value);
+});
+
+
+// METADATA
+
+function _File_name(file) { return file.name; }
+function _File_mime(file) { return file.type; }
+function _File_size(file) { return file.size; }
+
+function _File_lastModified(file)
+{
+	return $elm$time$Time$millisToPosix(file.lastModified);
+}
+
+
+// DOWNLOAD
+
+var _File_downloadNode;
+
+function _File_getDownloadNode()
+{
+	return _File_downloadNode || (_File_downloadNode = document.createElement('a'));
+}
+
+var _File_download = F3(function(name, mime, content)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		var blob = new Blob([content], {type: mime});
+
+		// for IE10+
+		if (navigator.msSaveOrOpenBlob)
+		{
+			navigator.msSaveOrOpenBlob(blob, name);
+			return;
+		}
+
+		// for HTML5
+		var node = _File_getDownloadNode();
+		var objectUrl = URL.createObjectURL(blob);
+		node.href = objectUrl;
+		node.download = name;
+		_File_click(node);
+		URL.revokeObjectURL(objectUrl);
+	});
+});
+
+function _File_downloadUrl(href)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		var node = _File_getDownloadNode();
+		node.href = href;
+		node.download = '';
+		node.origin === location.origin || (node.target = '_blank');
+		_File_click(node);
+	});
+}
+
+
+// IE COMPATIBILITY
+
+function _File_makeBytesSafeForInternetExplorer(bytes)
+{
+	// only needed by IE10 and IE11 to fix https://github.com/elm/file/issues/10
+	// all other browsers can just run `new Blob([bytes])` directly with no problem
+	//
+	return new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+}
+
+function _File_click(node)
+{
+	// only needed by IE10 and IE11 to fix https://github.com/elm/file/issues/11
+	// all other browsers have MouseEvent and do not need this conditional stuff
+	//
+	if (typeof MouseEvent === 'function')
+	{
+		node.dispatchEvent(new MouseEvent('click'));
+	}
+	else
+	{
+		var event = document.createEvent('MouseEvents');
+		event.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+		document.body.appendChild(node);
+		node.dispatchEvent(event);
+		document.body.removeChild(node);
+	}
+}
+
+
+// UPLOAD
+
+var _File_node;
+
+function _File_uploadOne(mimes)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		_File_node = document.createElement('input');
+		_File_node.type = 'file';
+		_File_node.accept = A2($elm$core$String$join, ',', mimes);
+		_File_node.addEventListener('change', function(event)
+		{
+			callback(_Scheduler_succeed(event.target.files[0]));
+		});
+		_File_click(_File_node);
+	});
+}
+
+function _File_uploadOneOrMore(mimes)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		_File_node = document.createElement('input');
+		_File_node.type = 'file';
+		_File_node.multiple = true;
+		_File_node.accept = A2($elm$core$String$join, ',', mimes);
+		_File_node.addEventListener('change', function(event)
+		{
+			var elmFiles = _List_fromArray(event.target.files);
+			callback(_Scheduler_succeed(_Utils_Tuple2(elmFiles.a, elmFiles.b)));
+		});
+		_File_click(_File_node);
+	});
+}
+
+
+// CONTENT
+
+function _File_toString(blob)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		var reader = new FileReader();
+		reader.addEventListener('loadend', function() {
+			callback(_Scheduler_succeed(reader.result));
+		});
+		reader.readAsText(blob);
+		return function() { reader.abort(); };
+	});
+}
+
+function _File_toBytes(blob)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		var reader = new FileReader();
+		reader.addEventListener('loadend', function() {
+			callback(_Scheduler_succeed(new DataView(reader.result)));
+		});
+		reader.readAsArrayBuffer(blob);
+		return function() { reader.abort(); };
+	});
+}
+
+function _File_toUrl(blob)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		var reader = new FileReader();
+		reader.addEventListener('loadend', function() {
+			callback(_Scheduler_succeed(reader.result));
+		});
+		reader.readAsDataURL(blob);
+		return function() { reader.abort(); };
+	});
+}
+
+
+
+
 var _Bitwise_and = F2(function(a, b)
 {
 	return a & b;
@@ -6359,6 +6537,12 @@ var $author$project$Main$subscriptions = function (model) {
 				A2($elm$time$Time$every, 60000 / model.bpm, $author$project$Main$NextStep)
 			]));
 };
+var $author$project$Main$FileRead = function (a) {
+	return {$: 'FileRead', a: a};
+};
+var $author$project$Main$Load = function (a) {
+	return {$: 'Load', a: a};
+};
 var $elm$core$Elm$JsArray$map = _JsArray_map;
 var $elm$core$Array$map = F2(
 	function (func, _v0) {
@@ -6403,96 +6587,73 @@ var $author$project$Main$clear = function (model) {
 			tracks: $author$project$Main$initTracks(model)
 		});
 };
-var $author$project$Main$noteOff = F2(
-	function (key, model) {
-		return _Utils_update(
-			model,
-			{
-				piano: A2(
+var $elm$json$Json$Encode$bool = _Json_wrap;
+var $elm$json$Json$Encode$int = _Json_wrap;
+var $author$project$Main$save = function (model) {
+	return A2(
+		$elm$json$Json$Encode$encode,
+		0,
+		$elm$json$Json$Encode$object(
+			_Utils_ap(
+				_List_fromArray(
+					[
+						_Utils_Tuple2(
+						'len',
+						$elm$json$Json$Encode$int(model.len)),
+						_Utils_Tuple2(
+						'bpm',
+						$elm$json$Json$Encode$float(model.bpm)),
+						_Utils_Tuple2(
+						'transpose',
+						$elm$json$Json$Encode$float(model.transpose)),
+						_Utils_Tuple2(
+						'scale-name',
+						$elm$json$Json$Encode$string(model.scale.name)),
+						_Utils_Tuple2(
+						'seqType',
+						$elm$json$Json$Encode$string(model.seqType)),
+						_Utils_Tuple2(
+						'pianoType',
+						$elm$json$Json$Encode$string(model.pianoType))
+					]),
+				A2(
 					$elm$core$List$map,
-					function (note) {
-						return _Utils_eq(note.key, key) ? _Utils_update(
-							note,
-							{triggered: false}) : note;
+					function (t) {
+						return _Utils_Tuple2(
+							t.key,
+							A2(
+								$elm$json$Json$Encode$list,
+								$elm$json$Json$Encode$bool,
+								$elm$core$Array$toList(t.beats)));
 					},
-					model.piano)
-			});
-	});
-var $author$project$Main$noteOn = F2(
-	function (key, model) {
-		return _Utils_update(
-			model,
-			{
-				piano: A2(
-					$elm$core$List$map,
-					function (note) {
-						return _Utils_eq(note.key, key) ? _Utils_update(
-							note,
-							{triggered: true}) : note;
-					},
-					model.piano)
-			});
-	});
-var $elm$core$Tuple$pair = F2(
-	function (a, b) {
-		return _Utils_Tuple2(a, b);
-	});
-var $author$project$Main$pauseToggle = function (model) {
-	return _Utils_update(
-		model,
-		{
-			go: model.go ? false : true,
-			notes: _List_Nil
-		});
+					$elm$core$Array$toList(model.tracks)))));
 };
-var $author$project$Main$updateBeats = F2(
-	function (model, string) {
-		return _Utils_update(
-			model,
-			{
-				len: function () {
-					var _v0 = $elm$core$String$toInt(string);
-					if (_v0.$ === 'Just') {
-						var i = _v0.a;
-						return i;
-					} else {
-						return model.len;
-					}
-				}(),
-				tracks: $author$project$Main$initTracks(model)
-			});
+var $elm$file$File$Download$string = F3(
+	function (name, mime, content) {
+		return A2(
+			$elm$core$Task$perform,
+			$elm$core$Basics$never,
+			A3(_File_download, name, mime, content));
 	});
-var $elm$core$String$toFloat = _String_toFloat;
-var $author$project$Main$updateBpm = F2(
-	function (model, string) {
-		return _Utils_update(
-			model,
-			{
-				bpm: function () {
-					var _v0 = $elm$core$String$toFloat(string);
-					if (_v0.$ === 'Just') {
-						var i = _v0.a;
-						return i;
-					} else {
-						return model.bpm;
-					}
-				}()
-			});
-	});
-var $elm$core$String$toLower = _String_toLower;
-var $author$project$Main$updatePianoType = F2(
-	function (model, string) {
-		return _Utils_update(
-			model,
-			{
-				pianoType: $elm$core$String$toLower(string)
-			});
-	});
-var $author$project$Main$updateReset = function (model) {
-	return _Utils_update(
-		model,
-		{bpm: 200, len: 8, transpose: 0});
+var $author$project$Main$download = function (model) {
+	return A3(
+		$elm$file$File$Download$string,
+		'song.jonah',
+		'text/rtf',
+		$author$project$Main$save(model));
 };
+var $elm$file$File$Select$file = F2(
+	function (mimes, toMsg) {
+		return A2(
+			$elm$core$Task$perform,
+			toMsg,
+			_File_uploadOne(mimes));
+	});
+var $elm$json$Json$Decode$bool = _Json_decodeBool;
+var $elm$json$Json$Decode$decodeString = _Json_runOnString;
+var $elm$json$Json$Decode$float = _Json_decodeFloat;
+var $elm$json$Json$Decode$int = _Json_decodeInt;
+var $elm$json$Json$Decode$list = _Json_decodeList;
 var $author$project$Main$scales = $elm$core$Dict$fromList(
 	_List_fromArray(
 		[
@@ -6614,6 +6775,213 @@ var $elm$core$Maybe$withDefault = F2(
 			return _default;
 		}
 	});
+var $author$project$Main$load = F2(
+	function (model, s) {
+		var scaleString = function () {
+			var _v6 = A2(
+				$elm$json$Json$Decode$decodeString,
+				A2($elm$json$Json$Decode$field, 'scale-name', $elm$json$Json$Decode$string),
+				s);
+			if (_v6.$ === 'Ok') {
+				var sc = _v6.a;
+				return sc;
+			} else {
+				return 'Pentatonic';
+			}
+		}();
+		var newScale = A2(
+			$elm$core$Maybe$withDefault,
+			$author$project$Main$pentatonic,
+			A2($elm$core$Dict$get, scaleString, $author$project$Main$scales));
+		var newLen = function () {
+			var _v5 = A2(
+				$elm$json$Json$Decode$decodeString,
+				A2($elm$json$Json$Decode$field, 'len', $elm$json$Json$Decode$int),
+				s);
+			if (_v5.$ === 'Ok') {
+				var l = _v5.a;
+				return l;
+			} else {
+				return model.len;
+			}
+		}();
+		var tracks = A2($author$project$Main$trackInit, newScale, newLen);
+		var newTrack = A2(
+			$elm$core$Array$map,
+			function (track) {
+				var _v4 = A2(
+					$elm$json$Json$Decode$decodeString,
+					A2(
+						$elm$json$Json$Decode$field,
+						track.key,
+						$elm$json$Json$Decode$list($elm$json$Json$Decode$bool)),
+					s);
+				if (_v4.$ === 'Ok') {
+					var bts = _v4.a;
+					return _Utils_update(
+						track,
+						{
+							beats: $elm$core$Array$fromList(bts)
+						});
+				} else {
+					return track;
+				}
+			},
+			tracks);
+		return _Utils_update(
+			model,
+			{
+				bpm: function () {
+					var _v0 = A2(
+						$elm$json$Json$Decode$decodeString,
+						A2($elm$json$Json$Decode$field, 'bpm', $elm$json$Json$Decode$float),
+						s);
+					if (_v0.$ === 'Ok') {
+						var b = _v0.a;
+						return b;
+					} else {
+						return model.bpm;
+					}
+				}(),
+				len: newLen,
+				notes: $author$project$Main$scaleInit(newScale),
+				piano: $author$project$Main$pianoKeys(
+					$author$project$Main$scaleInit(newScale)),
+				pianoType: function () {
+					var _v1 = A2(
+						$elm$json$Json$Decode$decodeString,
+						A2($elm$json$Json$Decode$field, 'pianoType', $elm$json$Json$Decode$string),
+						s);
+					if (_v1.$ === 'Ok') {
+						var pt = _v1.a;
+						return pt;
+					} else {
+						return model.pianoType;
+					}
+				}(),
+				scale: newScale,
+				seqType: function () {
+					var _v2 = A2(
+						$elm$json$Json$Decode$decodeString,
+						A2($elm$json$Json$Decode$field, 'seqType', $elm$json$Json$Decode$string),
+						s);
+					if (_v2.$ === 'Ok') {
+						var st = _v2.a;
+						return st;
+					} else {
+						return model.seqType;
+					}
+				}(),
+				tracks: newTrack,
+				transpose: function () {
+					var _v3 = A2(
+						$elm$json$Json$Decode$decodeString,
+						A2($elm$json$Json$Decode$field, 'transpose', $elm$json$Json$Decode$float),
+						s);
+					if (_v3.$ === 'Ok') {
+						var t = _v3.a;
+						return t;
+					} else {
+						return model.transpose;
+					}
+				}()
+			});
+	});
+var $author$project$Main$modelFromFile = F2(
+	function (model, string) {
+		return A2($author$project$Main$load, model, string);
+	});
+var $author$project$Main$noteOff = F2(
+	function (key, model) {
+		return _Utils_update(
+			model,
+			{
+				piano: A2(
+					$elm$core$List$map,
+					function (note) {
+						return _Utils_eq(note.key, key) ? _Utils_update(
+							note,
+							{triggered: false}) : note;
+					},
+					model.piano)
+			});
+	});
+var $author$project$Main$noteOn = F2(
+	function (key, model) {
+		return _Utils_update(
+			model,
+			{
+				piano: A2(
+					$elm$core$List$map,
+					function (note) {
+						return _Utils_eq(note.key, key) ? _Utils_update(
+							note,
+							{triggered: true}) : note;
+					},
+					model.piano)
+			});
+	});
+var $elm$core$Tuple$pair = F2(
+	function (a, b) {
+		return _Utils_Tuple2(a, b);
+	});
+var $author$project$Main$pauseToggle = function (model) {
+	return _Utils_update(
+		model,
+		{
+			go: model.go ? false : true,
+			notes: _List_Nil
+		});
+};
+var $elm$file$File$toString = _File_toString;
+var $author$project$Main$updateBeats = F2(
+	function (model, string) {
+		return _Utils_update(
+			model,
+			{
+				len: function () {
+					var _v0 = $elm$core$String$toInt(string);
+					if (_v0.$ === 'Just') {
+						var i = _v0.a;
+						return i;
+					} else {
+						return model.len;
+					}
+				}(),
+				tracks: $author$project$Main$initTracks(model)
+			});
+	});
+var $elm$core$String$toFloat = _String_toFloat;
+var $author$project$Main$updateBpm = F2(
+	function (model, string) {
+		return _Utils_update(
+			model,
+			{
+				bpm: function () {
+					var _v0 = $elm$core$String$toFloat(string);
+					if (_v0.$ === 'Just') {
+						var i = _v0.a;
+						return i;
+					} else {
+						return model.bpm;
+					}
+				}()
+			});
+	});
+var $elm$core$String$toLower = _String_toLower;
+var $author$project$Main$updatePianoType = F2(
+	function (model, string) {
+		return _Utils_update(
+			model,
+			{
+				pianoType: $elm$core$String$toLower(string)
+			});
+	});
+var $author$project$Main$updateReset = function (model) {
+	return _Utils_update(
+		model,
+		{bpm: 200, len: 8, transpose: 0});
+};
 var $author$project$Main$updateScale = F2(
 	function (model, string) {
 		var newScale = A2(
@@ -6853,10 +7221,31 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					A2($author$project$Main$updatePianoType, model, string),
 					$elm$core$Platform$Cmd$none);
-			default:
+			case 'ChangeSeqType':
 				var string = msg.a;
 				return _Utils_Tuple2(
 					A2($author$project$Main$updateSeqType, model, string),
+					$elm$core$Platform$Cmd$none);
+			case 'Download':
+				return _Utils_Tuple2(
+					model,
+					$author$project$Main$download(model));
+			case 'OpenFileClicked':
+				return _Utils_Tuple2(
+					model,
+					A2($elm$file$File$Select$file, _List_Nil, $author$project$Main$Load));
+			case 'Load':
+				var file = msg.a;
+				return _Utils_Tuple2(
+					model,
+					A2(
+						$elm$core$Task$perform,
+						$author$project$Main$FileRead,
+						$elm$file$File$toString(file)));
+			default:
+				var string = msg.a;
+				return _Utils_Tuple2(
+					A2($author$project$Main$modelFromFile, model, string),
 					$elm$core$Platform$Cmd$none);
 		}
 	});
@@ -6869,11 +7258,14 @@ var $author$project$Main$ChangeBeats = function (a) {
 	return {$: 'ChangeBeats', a: a};
 };
 var $author$project$Main$Clear = {$: 'Clear'};
+var $author$project$Main$Download = {$: 'Download'};
+var $author$project$Main$OpenFileClicked = {$: 'OpenFileClicked'};
 var $author$project$Main$PauseToggle = {$: 'PauseToggle'};
 var $author$project$Main$Reset = {$: 'Reset'};
 var $author$project$Main$Transpose = function (a) {
 	return {$: 'Transpose', a: a};
 };
+var $elm$html$Html$a = _VirtualDom_node('a');
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
@@ -6888,6 +7280,12 @@ var $elm$html$Html$h1 = _VirtualDom_node('h1');
 var $elm$html$Html$h2 = _VirtualDom_node('h2');
 var $elm$html$Html$h3 = _VirtualDom_node('h3');
 var $elm$html$Html$hr = _VirtualDom_node('hr');
+var $elm$html$Html$Attributes$href = function (url) {
+	return A2(
+		$elm$html$Html$Attributes$stringProperty,
+		'href',
+		_VirtualDom_noJavaScriptUri(url));
+};
 var $elm$html$Html$input = _VirtualDom_node('input');
 var $elm$html$Html$main_ = _VirtualDom_node('main');
 var $elm$html$Html$Attributes$max = $elm$html$Html$Attributes$stringProperty('max');
@@ -6990,7 +7388,6 @@ var $author$project$Main$ChangeScale = function (a) {
 };
 var $elm$html$Html$option = _VirtualDom_node('option');
 var $elm$html$Html$select = _VirtualDom_node('select');
-var $elm$json$Json$Encode$bool = _Json_wrap;
 var $elm$html$Html$Attributes$boolProperty = F2(
 	function (key, bool) {
 		return A2(
@@ -7022,7 +7419,8 @@ var $author$project$Main$viewScales = function (model) {
 							_List_fromArray(
 								[
 									$elm$html$Html$Attributes$value(name),
-									$elm$html$Html$Attributes$selected(name === 'Pentatonic')
+									$elm$html$Html$Attributes$selected(
+									_Utils_eq(name, model.scale.name))
 								]),
 							_List_fromArray(
 								[
@@ -7063,8 +7461,8 @@ var $author$project$Main$midiToIndex = F2(
 						return _Debug_todo(
 							'Main',
 							{
-								start: {line: 282, column: 21},
-								end: {line: 282, column: 31}
+								start: {line: 411, column: 21},
+								end: {line: 411, column: 31}
 							})('not in model');
 					} else {
 						var h = lst.a;
@@ -7156,7 +7554,10 @@ var $author$project$Main$viewTypes = F2(
 								_List_fromArray(
 									[
 										$elm$html$Html$Attributes$value(name),
-										$elm$html$Html$Attributes$selected(name === 'Sawtooth')
+										$elm$html$Html$Attributes$selected(
+										_Utils_eq(
+											$elm$core$String$toLower(name),
+											(version === 'piano') ? model.pianoType : model.seqType))
 									]),
 								_List_fromArray(
 									[
@@ -7180,18 +7581,39 @@ var $author$project$Main$view = function (model) {
 				$elm$html$Html$h1,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('text-3xl my-10')
+						$elm$html$Html$Attributes$class('text-3xl my-4')
 					]),
 				_List_fromArray(
 					[
 						$elm$html$Html$text('Elm Synth Sequencer by Jonah Fleishhacker')
 					])),
 				A2(
+				$elm$html$Html$a,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$href('https://drive.google.com/drive/folders/1n7L9bH3w3hNBkmn4vi6Vu5Ez_Zy6_4lZ?usp=sharing'),
+						A2($elm$html$Html$Attributes$style, 'color', 'blue'),
+						A2($elm$html$Html$Attributes$style, 'font-style', 'italic'),
+						A2($elm$html$Html$Attributes$style, 'text-decoration', 'underline'),
+						$elm$html$Html$Attributes$class('my-4')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Share songs here')
+					])),
+				A2(
+				$elm$html$Html$hr,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'padding-top', '10px')
+					]),
+				_List_Nil),
+				A2(
 				$elm$html$Html$h2,
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Scale : ')
+						$elm$html$Html$text('Scale: ')
 					])),
 				$author$project$Main$viewScales(model),
 				A2(
@@ -7267,6 +7689,30 @@ var $author$project$Main$view = function (model) {
 						_List_fromArray(
 							[
 								$elm$html$Html$text('Reset Sliders')
+							])),
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick($author$project$Main$Download),
+								$elm$html$Html$Attributes$class('bg-indigo-900 text-white\n\n\n            font-bold rounded mr-4'),
+								A2($elm$html$Html$Attributes$style, 'padding', '20px')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Download')
+							])),
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick($author$project$Main$OpenFileClicked),
+								$elm$html$Html$Attributes$class('bg-indigo-900\n            text-white\n            font-bold rounded'),
+								A2($elm$html$Html$Attributes$style, 'padding', '20px')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Upload')
 							]))
 					])),
 				A2(

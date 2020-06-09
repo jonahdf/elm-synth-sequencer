@@ -8,6 +8,9 @@ import Array as A
 import Browser
 import Browser.Events
 import Dict exposing (Dict)
+import File exposing (File)
+import File.Download
+import File.Select
 import Html
     exposing
         ( Attribute
@@ -24,8 +27,9 @@ import Html
         )
 import Html.Attributes as H exposing (class, href, style)
 import Html.Events exposing (onClick, onInput)
-import Json.Decode
-import Json.Encode
+import Json.Decode as Decode exposing (decodeString, field)
+import Json.Encode as Encode
+import Task
 import Time
 import WebAudio
 import WebAudio.Context as Cont
@@ -37,7 +41,7 @@ import WebAudio.Property as Prop
 -- Send the JSON encoded audio graph to javascript
 
 
-port updateAudio : Json.Encode.Value -> Cmd msg
+port updateAudio : Encode.Value -> Cmd msg
 
 
 
@@ -94,6 +98,131 @@ type alias Model =
     , seqType : String
     , pianoType : String
     }
+
+
+
+-- SAVE
+
+
+save : Model -> String
+save model =
+    Encode.encode
+        0
+        (Encode.object
+            ([ ( "len", Encode.int model.len )
+             , ( "bpm", Encode.float model.bpm )
+             , ( "transpose", Encode.float model.transpose )
+             , ( "scale-name", Encode.string model.scale.name )
+             , ( "seqType", Encode.string model.seqType )
+             , ( "pianoType", Encode.string model.pianoType )
+             ]
+                ++ List.map
+                    (\t ->
+                        ( t.key
+                        , Encode.list Encode.bool
+                            (A.toList
+                                t.beats
+                            )
+                        )
+                    )
+                    (A.toList
+                        model.tracks
+                    )
+            )
+        )
+
+
+
+-- LOAD --
+
+
+load : Model -> String -> Model
+load model s =
+    let
+        scaleString =
+            case decodeString (field "scale-name" Decode.string) s of
+                Ok sc ->
+                    sc
+
+                _ ->
+                    "Pentatonic"
+
+        newScale =
+            Maybe.withDefault pentatonic (Dict.get scaleString scales)
+
+        newLen =
+            case decodeString (field "len" Decode.int) s of
+                Ok l ->
+                    l
+
+                _ ->
+                    model.len
+
+        tracks =
+            trackInit newScale newLen
+
+        newTrack =
+            A.map
+                (\track ->
+                    case
+                        decodeString
+                            (field track.key
+                                (Decode.list
+                                    Decode.bool
+                                )
+                            )
+                            s
+                    of
+                        Ok bts ->
+                            { track | beats = A.fromList bts }
+
+                        _ ->
+                            track
+                )
+                tracks
+    in
+    { model
+        | tracks = newTrack
+        , notes = scaleInit newScale
+        , piano = pianoKeys (scaleInit newScale)
+        , scale = newScale
+        , len = newLen
+        , bpm =
+            case decodeString (field "bpm" Decode.float) s of
+                Ok b ->
+                    b
+
+                _ ->
+                    model.bpm
+        , transpose =
+            case decodeString (field "transpose" Decode.float) s of
+                Ok t ->
+                    t
+
+                _ ->
+                    model.transpose
+        , seqType =
+            case decodeString (field "seqType" Decode.string) s of
+                Ok st ->
+                    st
+
+                _ ->
+                    model.seqType
+        , pianoType =
+            case decodeString (field "pianoType" Decode.string) s of
+                Ok pt ->
+                    pt
+
+                _ ->
+                    model.pianoType
+    }
+
+
+
+{-
+   decodeTracks : String -> A.Array Track
+   decodeTracks string =
+-}
 
 
 scales : Dict String Scale
@@ -344,6 +473,10 @@ type Msg
     | ChangeScale String
     | ChangePianoType String
     | ChangeSeqType String
+    | Download
+    | Load File
+    | OpenFileClicked
+    | FileRead String
 
 
 
@@ -515,6 +648,16 @@ updateSeqType model string =
     }
 
 
+download : Model -> Cmd msg
+download model =
+    File.Download.string "song.jonah" "text/rtf" (save model)
+
+
+modelFromFile : Model -> String -> Model
+modelFromFile model string =
+    load model string
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -571,6 +714,18 @@ update msg model =
 
         ChangeSeqType string ->
             ( updateSeqType model string, Cmd.none )
+
+        Download ->
+            ( model, download model )
+
+        OpenFileClicked ->
+            ( model, File.Select.file [] Load )
+
+        Load file ->
+            ( model, Task.perform FileRead (File.toString file) )
+
+        FileRead string ->
+            ( modelFromFile model string, Cmd.none )
 
 
 
@@ -730,7 +885,7 @@ viewScales model =
                         [ H.value name
                         , H.selected
                             (name
-                                == "Pentatonic"
+                                == model.scale.name
                             )
                         ]
                         [ text
@@ -760,8 +915,13 @@ viewTypes model version =
                     Html.option
                         [ H.value name
                         , H.selected
-                            (name
-                                == "Sawtooth"
+                            (String.toLower name
+                                == (if version == "piano" then
+                                        model.pianoType
+
+                                    else
+                                        model.seqType
+                                   )
                             )
                         ]
                         [ text
@@ -776,9 +936,19 @@ viewTypes model version =
 view : Model -> Html Msg
 view model =
     main_ [ class "m-10" ]
-        [ h1 [ class "text-3xl my-10" ]
+        [ h1 [ class "text-3xl my-4" ]
             [ text "Elm Synth Sequencer by Jonah Fleishhacker" ]
-        , Html.h2 [] [ text "Scale : " ]
+        , Html.a
+            [ H.href
+                "https://drive.google.com/drive/folders/1n7L9bH3w3hNBkmn4vi6Vu5Ez_Zy6_4lZ?usp=sharing"
+            , style "color" "blue"
+            , style "font-style" "italic"
+            , style "text-decoration" "underline"
+            , class "my-4"
+            ]
+            [ text "Share songs here" ]
+        , Html.hr [ style "padding-top" "10px" ] []
+        , Html.h2 [] [ text "Scale: " ]
         , viewScales model
         , Html.h2 [] [ text "Piano Wave Type: " ]
         , viewTypes model "piano"
@@ -797,6 +967,8 @@ view model =
             , button [ onClick Clear, class "bg-indigo-500 text-white\n            font-bold\n            py-2 px-4 mr-4 rounded" ]
                 [ text "Clear" ]
             , button [ onClick Reset, class "bg-indigo-500 text-white font-bold\n            py-2 px-4 mr-4 rounded" ] [ text "Reset Sliders" ]
+            , button [ onClick Download, class "bg-indigo-900 text-white\n\n\n            font-bold rounded mr-4", style "padding" "20px" ] [ text "Download" ]
+            , button [ onClick OpenFileClicked, class "bg-indigo-900\n            text-white\n            font-bold rounded", style "padding" "20px" ] [ text "Upload" ]
             ]
         , div []
             [ Html.input
@@ -889,31 +1061,31 @@ view model =
 --
 
 
-noteOnDecoder : List Note -> Json.Decode.Decoder Msg
+noteOnDecoder : List Note -> Decode.Decoder Msg
 noteOnDecoder notes =
-    Json.Decode.field "key" Json.Decode.string
-        |> Json.Decode.andThen
+    Decode.field "key" Decode.string
+        |> Decode.andThen
             (\key ->
                 case List.any (\note -> note.key == key) notes of
                     True ->
-                        Json.Decode.succeed (NoteOn key)
+                        Decode.succeed (NoteOn key)
 
                     False ->
-                        Json.Decode.fail ""
+                        Decode.fail ""
             )
 
 
-noteOffDecoder : List Note -> Json.Decode.Decoder Msg
+noteOffDecoder : List Note -> Decode.Decoder Msg
 noteOffDecoder notes =
-    Json.Decode.field "key" Json.Decode.string
-        |> Json.Decode.andThen
+    Decode.field "key" Decode.string
+        |> Decode.andThen
             (\key ->
                 case List.any (\note -> note.key == key) notes of
                     True ->
-                        Json.Decode.succeed (NoteOff key)
+                        Decode.succeed (NoteOff key)
 
                     False ->
-                        Json.Decode.fail ""
+                        Decode.fail ""
             )
 
 
