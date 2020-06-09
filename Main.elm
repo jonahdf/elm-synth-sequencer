@@ -361,7 +361,39 @@ pianoKeys : List Note -> List Note
 pianoKeys notes =
     List.map2 (\note k -> { note | key = k })
         notes
-        [ "a", "s", "d", "f", "g", "h", "j", "k", "l", ";" ]
+        [ "a"
+        , "s"
+        , "d"
+        , "f"
+        , "g"
+        , "h"
+        , "j"
+        , "k"
+        , "l"
+        , ";"
+        , "q"
+        , "w"
+        , "e"
+        , "r"
+        , "t"
+        , "y"
+        , "u"
+        , "i"
+        , "o"
+        , "p"
+        , "["
+        , "]"
+        , "1"
+        , "2"
+        , "3"
+        , "4"
+        , "5"
+        , "6"
+        , "7"
+        , "8"
+        , "9"
+        , "0"
+        ]
 
 
 trackToggle : A.Array Track -> Float -> Int -> A.Array Track
@@ -841,8 +873,8 @@ noteView note =
 --
 
 
-viewSquare : Model -> Float -> Int -> Html Msg
-viewSquare model midi beat =
+viewSquare : Model -> Float -> Int -> String -> Html Msg
+viewSquare model midi beat key =
     button
         [ onClick (ToggleNote midi beat)
         , class
@@ -854,21 +886,28 @@ viewSquare model midi beat =
             )
         , style "border" "1px solid black"
         , style "padding" "20px"
+        , style "font-size" "small"
+        , style "width" "60px"
         ]
-        --[ text (Debug.toString (beat + 1)) ]
-        []
+        [ text (Debug.toString (beat + 1)) ]
 
 
-viewTrack : Model -> Float -> Html Msg
-viewTrack model midi =
-    div [ style "padding-bottom" "10px" ]
-        (List.map
-            (\x -> viewSquare model midi x)
-            (List.range
-                0
-                (model.len - 1)
+viewTrack : Model -> Float -> String -> Html Msg
+viewTrack model midi key =
+    div []
+        [ div
+            [ class "bg-indigo-800 text-white font-bold rounded px-2"
+            ]
+            [ text key ]
+        , div [ style "padding-bottom" "10px", style "padding-top" "10px" ]
+            (List.map
+                (\x -> viewSquare model midi x key)
+                (List.range
+                    0
+                    (model.len - 1)
+                )
             )
-        )
+        ]
 
 
 viewMeter : Model -> Int -> Html Msg
@@ -1009,7 +1048,7 @@ view model =
 
                 -- , style "padding" "10px"
                 , H.min "50"
-                , H.max "500"
+                , H.max "1000"
                 , H.value
                     (Debug.toString
                         model.bpm
@@ -1026,7 +1065,7 @@ view model =
 
                 --, style "padding" "10px"
                 , H.min "2"
-                , H.max "20"
+                , H.max "30"
                 , H.value
                     (Debug.toString
                         model.len
@@ -1065,7 +1104,13 @@ view model =
             , style "justify-content" "left"
             ]
             (List.map
-                (\note -> viewTrack model (Tuple.second note))
+                (\note ->
+                    viewTrack model
+                        (Tuple.second note)
+                        (Tuple.first
+                            note
+                        )
+                )
                 model.scale.notes
             )
         ]

@@ -5740,7 +5740,7 @@ var $author$project$Main$pianoKeys = function (notes) {
 			}),
 		notes,
 		_List_fromArray(
-			['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';']));
+			['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0']));
 };
 var $author$project$Main$Note = F3(
 	function (key, midi, triggered) {
@@ -7476,8 +7476,8 @@ var $author$project$Main$midiToIndex = F2(
 						return _Debug_todo(
 							'Main',
 							{
-								start: {line: 426, column: 21},
-								end: {line: 426, column: 31}
+								start: {line: 458, column: 21},
+								end: {line: 458, column: 31}
 							})('not in model');
 					} else {
 						var h = lst.a;
@@ -7507,8 +7507,8 @@ var $author$project$Main$getVal = F3(
 			A2($author$project$Main$midiToIndex, model, midi),
 			beat);
 	});
-var $author$project$Main$viewSquare = F3(
-	function (model, midi, beat) {
+var $author$project$Main$viewSquare = F4(
+	function (model, midi, beat, key) {
 		return A2(
 			$elm$html$Html$button,
 			_List_fromArray(
@@ -7519,24 +7519,47 @@ var $author$project$Main$viewSquare = F3(
 					$author$project$Main$noteCSS(
 						A3($author$project$Main$getVal, model, midi, beat))),
 					A2($elm$html$Html$Attributes$style, 'border', '1px solid black'),
-					A2($elm$html$Html$Attributes$style, 'padding', '20px')
+					A2($elm$html$Html$Attributes$style, 'padding', '20px'),
+					A2($elm$html$Html$Attributes$style, 'font-size', 'small'),
+					A2($elm$html$Html$Attributes$style, 'width', '60px')
 				]),
-			_List_Nil);
-	});
-var $author$project$Main$viewTrack = F2(
-	function (model, midi) {
-		return A2(
-			$elm$html$Html$div,
 			_List_fromArray(
 				[
-					A2($elm$html$Html$Attributes$style, 'padding-bottom', '10px')
-				]),
-			A2(
-				$elm$core$List$map,
-				function (x) {
-					return A3($author$project$Main$viewSquare, model, midi, x);
-				},
-				A2($elm$core$List$range, 0, model.len - 1)));
+					$elm$html$Html$text(
+					$elm$core$Debug$toString(beat + 1))
+				]));
+	});
+var $author$project$Main$viewTrack = F3(
+	function (model, midi, key) {
+		return A2(
+			$elm$html$Html$div,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('bg-indigo-800 text-white font-bold rounded px-2')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(key)
+						])),
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'padding-bottom', '10px'),
+							A2($elm$html$Html$Attributes$style, 'padding-top', '10px')
+						]),
+					A2(
+						$elm$core$List$map,
+						function (x) {
+							return A4($author$project$Main$viewSquare, model, midi, x, key);
+						},
+						A2($elm$core$List$range, 0, model.len - 1)))
+				]));
 	});
 var $author$project$Main$ChangePianoType = function (a) {
 	return {$: 'ChangePianoType', a: a};
@@ -7764,7 +7787,7 @@ var $author$project$Main$view = function (model) {
 								$elm$html$Html$Attributes$type_('range'),
 								$elm$html$Html$Attributes$class('bg-indigo-500 mr-4'),
 								$elm$html$Html$Attributes$min('50'),
-								$elm$html$Html$Attributes$max('500'),
+								$elm$html$Html$Attributes$max('1000'),
 								$elm$html$Html$Attributes$value(
 								$elm$core$Debug$toString(model.bpm)),
 								$elm$html$Html$Events$onInput($author$project$Main$Bpm)
@@ -7788,7 +7811,7 @@ var $author$project$Main$view = function (model) {
 								$elm$html$Html$Attributes$type_('range'),
 								$elm$html$Html$Attributes$class('bg-indigo-500 mr-4'),
 								$elm$html$Html$Attributes$min('2'),
-								$elm$html$Html$Attributes$max('20'),
+								$elm$html$Html$Attributes$max('30'),
 								$elm$html$Html$Attributes$value(
 								$elm$core$Debug$toString(model.len)),
 								$elm$html$Html$Events$onInput($author$project$Main$ChangeBeats)
@@ -7882,7 +7905,7 @@ var $author$project$Main$view = function (model) {
 				A2(
 					$elm$core$List$map,
 					function (note) {
-						return A2($author$project$Main$viewTrack, model, note.b);
+						return A3($author$project$Main$viewTrack, model, note.b, note.a);
 					},
 					model.scale.notes))
 			]));
