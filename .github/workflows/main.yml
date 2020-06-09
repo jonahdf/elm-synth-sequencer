@@ -28,4 +28,4 @@ jobs:
     # Runs a set of commands using the runners shell
     - name: Run a multi-line script
       run:
-        elm make Main.elm --output=elm.js
+        elm make src/Main.elm --optimize --output=out/elm.js
