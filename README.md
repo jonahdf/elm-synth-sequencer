@@ -9,5 +9,5 @@ elm make Main.elm --output=elm.js
 
 Run a server and enjoy!
 
-### Or play around with it here!
-jonahdf.com
+### [Or play around with it here!](jonahdf.com)
+[jonahdf.com](jonahdf.com)
