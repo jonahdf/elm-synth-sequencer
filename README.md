@@ -4,7 +4,7 @@ An interactive grid sequencer written in Elm.
 
 ### Compilation: In main directory, run:
 ~~~
-elm make Main.elm --output=out/elm.js
+elm make Main.elm --optimize --output=out/elm.js
 ~~~
 
 Run a server and enjoy!
