@@ -7617,7 +7617,21 @@ var $author$project$View$view = function (model) {
 					]),
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Share songs here')
+						$elm$html$Html$text('Share songs here                     |   ')
+					])),
+				A2(
+				$elm$html$Html$a,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$href('https://github.com/jonahdf/elm-synth-sequencer'),
+						A2($elm$html$Html$Attributes$style, 'color', 'blue'),
+						A2($elm$html$Html$Attributes$style, 'font-style', 'italic'),
+						A2($elm$html$Html$Attributes$style, 'text-decoration', 'underline'),
+						$elm$html$Html$Attributes$class('my-f')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Source code')
 					])),
 				A2(
 				$elm$html$Html$hr,

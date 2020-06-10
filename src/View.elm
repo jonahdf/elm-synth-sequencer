@@ -177,7 +177,16 @@ view model =
             , style "text-decoration" "underline"
             , class "my-4"
             ]
-            [ text "Share songs here" ]
+            [ text "Share songs here                     |   " ]
+        , Html.a
+            [ H.href
+                "https://github.com/jonahdf/elm-synth-sequencer"
+            , style "color" "blue"
+            , style "font-style" "italic"
+            , style "text-decoration" "underline"
+            , class "my-f"
+            ]
+            [ text "Source code" ]
         , Html.hr [ style "padding-top" "10px" ] []
         , Html.h2 [] [ text "Scale: " ]
         , viewScales model
