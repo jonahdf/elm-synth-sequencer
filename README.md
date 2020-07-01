@@ -9,7 +9,7 @@ elm make Main.elm --optimize --output=out/elm.js
 
 Run a server and enjoy!
 
-### [Or play around with it here!](jonahdf.com)
+### [Or play around with it here!](http://jonahdf.com)
 
 
 Acknowledgements:
