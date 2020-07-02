@@ -35,6 +35,9 @@ type Msg
     | Load File
     | OpenFileClicked
     | FileRead String
+    | InstructionsToggle
+    | SeqVolume String
+    | PianoVolume String
 
 
 noteOn : String -> Model -> Model
@@ -195,6 +198,39 @@ updateSeqType model string =
     }
 
 
+updateInstructions : Model -> Model
+updateInstructions model =
+    { model
+        | instructions = not model.instructions
+    }
+
+
+updateSeqVolume : Model -> String -> Model
+updateSeqVolume model string =
+    { model
+        | seqVolume =
+            case String.toFloat string of
+                Just i ->
+                    i
+
+                Nothing ->
+                    model.seqVolume
+    }
+
+
+updatePianoVolume : Model -> String -> Model
+updatePianoVolume model string =
+    { model
+        | pianoVolume =
+            case String.toFloat string of
+                Just i ->
+                    i
+
+                Nothing ->
+                    model.pianoVolume
+    }
+
+
 download : Model -> Cmd msg
 download model =
     File.Download.string "song.jonah" "text/rtf" (save model)
@@ -273,3 +309,12 @@ update msg model =
 
         FileRead string ->
             ( modelFromFile model string, Cmd.none )
+
+        InstructionsToggle ->
+            ( updateInstructions model, Cmd.none )
+
+        SeqVolume string ->
+            ( updateSeqVolume model string, Cmd.none )
+
+        PianoVolume string ->
+            ( updatePianoVolume model string, Cmd.none )

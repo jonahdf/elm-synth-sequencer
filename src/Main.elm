@@ -61,6 +61,9 @@ init co =
       , scale = pentatonic
       , seqType = "sawtooth"
       , pianoType = "sawtooth"
+      , instructions = False
+      , seqVolume = 5
+      , pianoVolume = 5
       }
     , Cmd.none
     )

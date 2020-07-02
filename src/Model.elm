@@ -20,6 +20,9 @@ type alias Model =
     , scale : Scale
     , seqType : String
     , pianoType : String
+    , instructions : Bool
+    , seqVolume : Float
+    , pianoVolume : Float
     }
 
 

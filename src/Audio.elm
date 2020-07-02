@@ -19,8 +19,8 @@ mtof midi =
 -- This takes a Note (as defined above) and converts that to a synth voice.
 
 
-voice : Float -> String -> Note -> WebAudio.Node
-voice transpose waveType note =
+voice : Float -> Float -> String -> Note -> WebAudio.Node
+voice transpose volume waveType note =
     WebAudio.oscillator
         [ Prop.frequency <| mtof (note.midi + transpose)
         , Prop.type_ waveType
@@ -28,7 +28,7 @@ voice transpose waveType note =
         [ WebAudio.gain
             [ Prop.gain <|
                 if note.triggered then
-                    0.1
+                    volume / 50
 
                 else
                     0
@@ -37,8 +37,8 @@ voice transpose waveType note =
         ]
 
 
-voicePiano : Float -> String -> Note -> WebAudio.Node
-voicePiano transpose waveType note =
+voicePiano : Float -> Float -> String -> Note -> WebAudio.Node
+voicePiano transpose volume waveType note =
     WebAudio.oscillator
         [ Prop.frequency <| mtof (note.midi + transpose)
         , Prop.type_ waveType
@@ -46,7 +46,7 @@ voicePiano transpose waveType note =
         [ WebAudio.gain
             [ Prop.gain <|
                 if note.triggered then
-                    0.1
+                    volume / 50
 
                 else
                     0
@@ -65,5 +65,5 @@ voicePiano transpose waveType note =
 
 audio : Model -> WebAudio.Graph
 audio model =
-    List.map (voice model.transpose model.seqType) model.notes
-        ++ List.map (voicePiano model.transpose model.pianoType) model.piano
+    List.map (voice model.transpose model.seqVolume model.seqType) model.notes
+        ++ List.map (voicePiano model.transpose model.pianoVolume model.pianoType) model.piano

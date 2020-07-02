@@ -187,11 +187,42 @@ view model =
             , class "my-f"
             ]
             [ text "Source code" ]
+        , div [ class "p-1 my-1" ]
+            [ button [ onClick InstructionsToggle, class "bg-indigo-500\n\n            text-white font-bold py-1 px-2 mr-1 rounded" ]
+                [ if model.instructions then
+                    text "Hide instructions"
+
+                  else
+                    text "View instructions"
+                ]
+            ]
+        , if model.instructions then
+            Html.p [] [ text "Welcome to Elm Synth Sequencer!\n\n\n            You can use your middle keyboard row to play the piano by pressing the keys displayed below. You can also\n            customize the scale and synth type used by the piano with the\n            dropdown selectors below. \n \n            \n            To use the sequencer, use your mouse\n            to select any combination of squares in the grid. Each row\n            corresponds to the labeled note, and each number represents a beat.\n            You may also customize the number of beats, BPM (beats per minute),\n            or transpose the notes up or down with the sliders. You can download\n            or upload your creations, or view other creations with the google\n            drive link at the top under 'share songs here'. Enjoy!" ]
+
+          else
+            Html.hr [] []
         , Html.hr [ style "padding-top" "10px" ] []
         , Html.h2 [] [ text "Scale: " ]
         , viewScales model
         , Html.h2 [] [ text "Piano Wave Type: " ]
         , viewTypes model "piano"
+        , div []
+            [ Html.input
+                [ H.type_ "range"
+                , class
+                    "bg-indigo-500 mr-4"
+                , H.min "0"
+                , H.max "10"
+                , H.step "0.5"
+                , H.value
+                    (String.fromFloat
+                        model.pianoVolume
+                    )
+                , onInput PianoVolume
+                ]
+                []
+            , text "Piano Volume"
+            ]
         , div [ class "flex", style "padding" "10px" ] <|
             List.map noteView model.piano
         , Html.hr [] []
@@ -209,6 +240,23 @@ view model =
             , button [ onClick Reset, class "bg-indigo-500 text-white font-bold\n            py-2 px-4 mr-4 rounded" ] [ text "Reset Sliders" ]
             , button [ onClick Download, class "bg-indigo-900 text-white\n\n\n            font-bold rounded mr-4", style "padding" "20px" ] [ text "Download" ]
             , button [ onClick OpenFileClicked, class "bg-indigo-900\n            text-white\n            font-bold rounded", style "padding" "20px" ] [ text "Upload" ]
+            ]
+        , div []
+            [ Html.input
+                [ H.type_ "range"
+                , class
+                    "bg-indigo-500 mr-4"
+                , H.min "0"
+                , H.max "10"
+                , H.step "0.5"
+                , H.value
+                    (String.fromFloat
+                        model.seqVolume
+                    )
+                , onInput SeqVolume
+                ]
+                []
+            , text "Sequencer Volume"
             ]
         , div []
             [ Html.input
