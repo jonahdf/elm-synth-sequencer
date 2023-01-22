@@ -171,7 +171,7 @@ view model =
             [ text "Elm Synth Sequencer by Jonah Fleishhacker" ]
         , Html.a
             [ H.href
-                "https://drive.google.com/drive/folders/1n7L9bH3w3hNBkmn4vi6Vu5Ez_Zy6_4lZ?usp=sharing"
+                "https://drive.google.com/drive/folders/1EHEkSvU7Hy3n05QMOcYDqycGpvSJtxo2?usp=sharing"
             , style "color" "blue"
             , style "font-style" "italic"
             , style "text-decoration" "underline"
